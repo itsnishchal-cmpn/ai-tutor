@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 import type { TopicProgress, QuizAnswer } from '../types/quiz';
-import { getItem, setItem } from '../lib/storage';
+import { getItem, setItem, removeItem } from '../lib/storage';
 
 interface ProgressContextValue {
   progress: Record<string, TopicProgress>;
@@ -8,6 +8,7 @@ interface ProgressContextValue {
   markTopicCompleted: (topicId: string) => void;
   addQuizResult: (answer: QuizAnswer) => void;
   getTopicProgress: (topicId: string) => TopicProgress | undefined;
+  resetProgress: () => void;
   totalQuizzes: number;
   correctQuizzes: number;
   completedTopics: number;
@@ -88,6 +89,11 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
     [progress]
   );
 
+  const resetProgress = useCallback(() => {
+    setProgress({});
+    removeItem('progress');
+  }, []);
+
   const allQuizzes = Object.values(progress).flatMap(p => p.quizResults);
   const totalQuizzes = allQuizzes.length;
   const correctQuizzes = allQuizzes.filter(q => q.isCorrect).length;
@@ -101,6 +107,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
         markTopicCompleted,
         addQuizResult,
         getTopicProgress,
+        resetProgress,
         totalQuizzes,
         correctQuizzes,
         completedTopics,
