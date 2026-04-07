@@ -31,11 +31,23 @@ export default function ChatInterface({
   nextTopicTitle,
   isTopicCompleted,
 }: Props) {
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const messagesRef = useRef<HTMLDivElement>(null);
+  const prevMessageCount = useRef(0);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, streamingContent]);
+    // Only auto-scroll when new messages are added or during streaming
+    // Not when loading saved chat history (message count jumps from 0 to many)
+    const isNewMessage = messages.length > prevMessageCount.current && prevMessageCount.current > 0;
+    const isFirstMessage = prevMessageCount.current === 0 && messages.length === 1;
+
+    if (isNewMessage || isFirstMessage || isStreaming) {
+      messagesRef.current?.scrollTo({
+        top: messagesRef.current.scrollHeight,
+        behavior: 'smooth',
+      });
+    }
+    prevMessageCount.current = messages.length;
+  }, [messages, streamingContent, isStreaming]);
 
   // No topic selected — show empty state
   if (!currentTopicId) {
@@ -66,9 +78,9 @@ export default function ChatInterface({
   }
 
   return (
-    <div className="h-full flex flex-col bg-gray-50">
+    <div className="h-full flex flex-col bg-gray-50 min-h-0">
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar pt-6 pb-4 space-y-1">
+      <div ref={messagesRef} className="flex-1 overflow-y-auto custom-scrollbar pt-4 pb-4 space-y-1 min-h-0">
         {messages.map(msg => (
           <MessageBubble
             key={msg.id}
@@ -95,7 +107,6 @@ export default function ChatInterface({
         {/* Typing indicator when streaming but no content yet */}
         {isStreaming && !streamingContent && <TypingIndicator />}
 
-        <div ref={bottomRef} />
       </div>
 
       {/* Input or completion banner */}
