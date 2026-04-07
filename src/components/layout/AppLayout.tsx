@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CurriculumSidebar from './CurriculumSidebar';
 import ProgressPanel from './ProgressPanel';
@@ -6,6 +6,7 @@ import ChatInterface from '../chat/ChatInterface';
 import { useChat } from '../../hooks/useChat';
 import { useUser } from '../../contexts/UserContext';
 import { useProgress } from '../../contexts/ProgressContext';
+import { getNextTopicId, getTopicById } from '../../data/curriculum';
 import {
   Menu,
   X,
@@ -27,14 +28,36 @@ export default function AppLayout() {
     navigate('/');
   };
 
+  const { progress } = useProgress();
+
+  const nextTopicId = useMemo(
+    () => currentTopicId ? getNextTopicId(currentTopicId) : null,
+    [currentTopicId]
+  );
+
+  const nextTopicTitle = useMemo(
+    () => nextTopicId ? getTopicById(nextTopicId)?.topic.title ?? null : null,
+    [nextTopicId]
+  );
+
+  const isCurrentTopicCompleted = currentTopicId
+    ? !!progress[currentTopicId]?.completed
+    : false;
+
   const handleTopicComplete = useCallback(() => {
     if (currentTopicId) {
       markTopicCompleted(currentTopicId);
     }
   }, [currentTopicId, markTopicCompleted]);
 
+  const handleNextTopic = useCallback(() => {
+    if (nextTopicId) {
+      selectTopic(nextTopicId);
+    }
+  }, [nextTopicId, selectTopic]);
+
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
+    <div className="app-shell flex flex-col bg-gray-50">
       {/* Top bar (mobile) */}
       <header className="lg:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100 shrink-0">
         <button onClick={() => setSidebarOpen(true)} className="p-1.5 hover:bg-gray-100 rounded-lg">
@@ -109,6 +132,9 @@ export default function AppLayout() {
             currentTopicId={currentTopicId}
             onSelectTopic={selectTopic}
             onTopicComplete={handleTopicComplete}
+            onNextTopic={handleNextTopic}
+            nextTopicTitle={nextTopicTitle}
+            isTopicCompleted={isCurrentTopicCompleted}
           />
         </main>
 

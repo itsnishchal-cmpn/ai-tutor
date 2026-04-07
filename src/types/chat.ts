@@ -1,4 +1,4 @@
-export type RichBlockType = 'text' | 'math' | 'diagram' | 'video' | 'quiz' | 'summary';
+export type RichBlockType = 'text' | 'math' | 'diagram' | 'video' | 'quiz' | 'summary' | 'resources';
 
 export interface TextBlock {
   type: 'text';
@@ -38,7 +38,19 @@ export interface SummaryBlock {
   keyPoints: string[];
 }
 
-export type RichContentBlock = TextBlock | MathBlock | DiagramBlock | VideoBlock | QuizBlock | SummaryBlock;
+export interface ResourceLink {
+  title: string;
+  url: string;
+  type: 'video' | 'article' | 'practice';
+}
+
+export interface ResourcesBlock {
+  type: 'resources';
+  heading: string;
+  links: ResourceLink[];
+}
+
+export type RichContentBlock = TextBlock | MathBlock | DiagramBlock | VideoBlock | QuizBlock | SummaryBlock | ResourcesBlock;
 
 export interface Message {
   id: string;

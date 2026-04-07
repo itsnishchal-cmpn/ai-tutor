@@ -16,8 +16,15 @@
   --color-green-india: #138808;
 }
 
-body {
+html, body, #root {
+  height: 100%;
   margin: 0;
+  overflow: hidden;
+}
+
+.app-shell {
+  height: 100vh;           /* fallback for older browsers */
+  height: 100dvh;          /* dynamic viewport height — respects browser chrome */
 }
 
 /* Custom scrollbar */

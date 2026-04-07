@@ -1,44 +1,44 @@
-// Maps topic concepts to relevant YouTube video IDs
-// These are real educational math videos for NCERT Class 8 Chapter 3
+// Maps topic concepts to real YouTube video IDs
+// Verified working videos from Magnet Brains, Khan Academy India, etc.
 export const videoMap: Record<string, { id: string; title: string }> = {
   'polygon-intro': {
-    id: 'KGqz2B0vlGY',
-    title: 'Polygons Introduction — NCERT Class 8',
+    id: 'JPrc70c7OqM',
+    title: 'Polygons — Understanding Quadrilaterals | Class 8 Maths (Magnet Brains)',
   },
   'angle-sum': {
-    id: 'qGx3MYKhpLI',
-    title: 'Angle Sum Property of Polygons',
+    id: '0QhGHIV61XA',
+    title: 'Sum of Interior Angles of Polygon | Class 8 Ch 3',
   },
   'quadrilateral-types': {
-    id: 'FHvoNh_RRXM',
-    title: 'Types of Quadrilaterals',
+    id: 'NLzElLjzvBg',
+    title: 'Quadrilateral and Its Types | Class 8 Maths Chapter 3 (Magnet Brains)',
   },
   'parallelogram': {
-    id: 'bIfBtkrsJd8',
-    title: 'Properties of Parallelogram',
+    id: 'DzXiWgT_hpE',
+    title: 'Properties of Parallelogram | Class 8 Maths (Magnet Brains)',
   },
   'rhombus': {
-    id: 'E5pMCnKdJlg',
-    title: 'Properties of Rhombus',
+    id: 'UYbpWzasIHg',
+    title: 'Rhombus: Special Parallelograms | Class 8 Maths (Magnet Brains)',
   },
   'rectangle': {
-    id: 'CjCaErDAkOY',
-    title: 'Properties of Rectangle',
+    id: 'I_z7fDIh-SU',
+    title: 'Special Parallelograms — Rectangle | Class 8 Maths (Magnet Brains)',
   },
   'square': {
-    id: 'V9xLoSTpeuo',
-    title: 'Properties of Square',
+    id: '3hlk2ds74fM',
+    title: 'Special Parallelograms — Square | Class 8 Maths (Magnet Brains)',
   },
   'kite': {
-    id: 'P2DVu1alge4',
-    title: 'Properties of Kite',
+    id: '5qSeSwNA0QM',
+    title: 'Kite as Geometric Shape | Class 8 (Khan Academy India)',
   },
   'trapezium': {
-    id: 'iSBbisZPbCQ',
-    title: 'Properties of Trapezium',
+    id: 'JYWIg5jtP-4',
+    title: 'Understanding Quadrilaterals — Trapezium | Class 8 Maths (Magnet Brains)',
   },
   'diagonal-properties': {
-    id: 'IaoZhhMB3IA',
-    title: 'Diagonal Properties of Quadrilaterals',
+    id: 'CNO3vHQGkBA',
+    title: 'Diagonals of Quadrilaterals | Rectangle, Parallelogram, Square, Kite & Rhombus',
   },
 };

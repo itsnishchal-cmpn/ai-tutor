@@ -7,9 +7,11 @@ interface Props {
   message: Message;
   onQuizContinue?: (message: string) => void;
   onTopicComplete?: () => void;
+  onNextTopic?: () => void;
+  nextTopicTitle?: string | null;
 }
 
-export default function MessageBubble({ message, onQuizContinue, onTopicComplete }: Props) {
+export default function MessageBubble({ message, onQuizContinue, onTopicComplete, onNextTopic, nextTopicTitle }: Props) {
   const isUser = message.role === 'user';
   const blocks = message.blocks ?? parseAIResponse(message.content);
 
@@ -45,6 +47,8 @@ export default function MessageBubble({ message, onQuizContinue, onTopicComplete
             blocks={blocks}
             onQuizContinue={onQuizContinue}
             onTopicComplete={onTopicComplete}
+            onNextTopic={onNextTopic}
+            nextTopicTitle={nextTopicTitle}
           />
         )}
       </div>

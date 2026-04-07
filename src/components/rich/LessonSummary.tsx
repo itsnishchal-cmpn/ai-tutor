@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
-import { BookOpen, CheckCircle2, Trophy } from 'lucide-react';
+import { BookOpen, CheckCircle2, Trophy, ArrowRight } from 'lucide-react';
 
 interface Props {
   content: string;
   keyPoints: string[];
   onTopicComplete?: () => void;
+  onNextTopic?: () => void;
+  nextTopicTitle?: string | null;
 }
 
-export default function LessonSummary({ content, keyPoints, onTopicComplete }: Props) {
+export default function LessonSummary({ content, keyPoints, onTopicComplete, onNextTopic, nextTopicTitle }: Props) {
   const [celebrated, setCelebrated] = useState(false);
 
   useEffect(() => {
@@ -40,6 +42,23 @@ export default function LessonSummary({ content, keyPoints, onTopicComplete }: P
           ))}
         </ul>
       )}
+
+      {/* Next Topic button */}
+      <div className="mt-3 pt-3 border-t border-green-200">
+        {nextTopicTitle ? (
+          <button
+            onClick={onNextTopic}
+            className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 transition-colors w-full justify-center"
+          >
+            Next Topic: {nextTopicTitle}
+            <ArrowRight size={16} />
+          </button>
+        ) : (
+          <p className="text-sm text-green-700 font-medium text-center">
+            All topics completed! 🎉
+          </p>
+        )}
+      </div>
     </div>
   );
 }

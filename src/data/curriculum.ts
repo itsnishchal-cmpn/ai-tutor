@@ -136,3 +136,10 @@ export function getAllTopicIds(): string[] {
   }
   return ids;
 }
+
+export function getNextTopicId(currentTopicId: string): string | null {
+  const ids = getAllTopicIds();
+  const idx = ids.indexOf(currentTopicId);
+  if (idx === -1 || idx === ids.length - 1) return null;
+  return ids[idx + 1];
+}

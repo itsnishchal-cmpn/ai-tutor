@@ -4,11 +4,14 @@ import DiagramRenderer from '../rich/DiagramRenderer';
 import VideoEmbed from '../rich/VideoEmbed';
 import QuizQuestion from '../rich/QuizQuestion';
 import LessonSummary from '../rich/LessonSummary';
+import ResourceCard from '../rich/ResourceCard';
 
 interface Props {
   blocks: RichContentBlock[];
   onQuizContinue?: (message: string) => void;
   onTopicComplete?: () => void;
+  onNextTopic?: () => void;
+  nextTopicTitle?: string | null;
 }
 
 function renderTextWithLineBreaks(text: string) {
@@ -41,7 +44,7 @@ function renderBoldAndItalic(text: string) {
   });
 }
 
-export default function MessageContent({ blocks, onQuizContinue, onTopicComplete }: Props) {
+export default function MessageContent({ blocks, onQuizContinue, onTopicComplete, onNextTopic, nextTopicTitle }: Props) {
   return (
     <div className="text-sm leading-relaxed">
       {blocks.map((block, i) => {
@@ -57,7 +60,9 @@ export default function MessageContent({ blocks, onQuizContinue, onTopicComplete
           case 'quiz':
             return <QuizQuestion key={i} quiz={block} onContinue={onQuizContinue} />;
           case 'summary':
-            return <LessonSummary key={i} content={block.content} keyPoints={block.keyPoints} onTopicComplete={onTopicComplete} />;
+            return <LessonSummary key={i} content={block.content} keyPoints={block.keyPoints} onTopicComplete={onTopicComplete} onNextTopic={onNextTopic} nextTopicTitle={nextTopicTitle} />;
+          case 'resources':
+            return <ResourceCard key={i} block={block} />;
           default:
             return null;
         }

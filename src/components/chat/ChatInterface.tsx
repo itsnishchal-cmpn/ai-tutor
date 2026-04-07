@@ -3,7 +3,7 @@ import type { Message } from '../../types/chat';
 import MessageBubble from './MessageBubble';
 import ChatInput from './ChatInput';
 import TypingIndicator from './TypingIndicator';
-import { MessageSquare, BookOpen, Bot } from 'lucide-react';
+import { MessageSquare, BookOpen, Bot, CheckCircle2, ArrowRight } from 'lucide-react';
 import { chapters } from '../../data/curriculum';
 
 interface Props {
@@ -14,6 +14,9 @@ interface Props {
   currentTopicId: string | null;
   onSelectTopic: (topicId: string) => void;
   onTopicComplete?: () => void;
+  onNextTopic?: () => void;
+  nextTopicTitle?: string | null;
+  isTopicCompleted?: boolean;
 }
 
 export default function ChatInterface({
@@ -24,6 +27,9 @@ export default function ChatInterface({
   currentTopicId,
   onSelectTopic,
   onTopicComplete,
+  onNextTopic,
+  nextTopicTitle,
+  isTopicCompleted,
 }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -69,6 +75,8 @@ export default function ChatInterface({
             message={msg}
             onQuizContinue={!isStreaming ? onSend : undefined}
             onTopicComplete={onTopicComplete}
+            onNextTopic={onNextTopic}
+            nextTopicTitle={nextTopicTitle}
           />
         ))}
 
@@ -90,8 +98,30 @@ export default function ChatInterface({
         <div ref={bottomRef} />
       </div>
 
-      {/* Input */}
-      <ChatInput onSend={onSend} disabled={isStreaming} />
+      {/* Input or completion banner */}
+      {isTopicCompleted ? (
+        <div className="px-4 py-3 bg-green-50 border-t border-green-200">
+          <div className="flex items-center justify-between max-w-2xl mx-auto">
+            <div className="flex items-center gap-2 text-green-700 text-sm font-medium">
+              <CheckCircle2 size={18} />
+              <span>Topic completed!</span>
+            </div>
+            {nextTopicTitle ? (
+              <button
+                onClick={onNextTopic}
+                className="flex items-center gap-1.5 px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 transition-colors"
+              >
+                Next: {nextTopicTitle}
+                <ArrowRight size={16} />
+              </button>
+            ) : (
+              <span className="text-sm text-green-600 font-medium">All topics done! 🎉</span>
+            )}
+          </div>
+        </div>
+      ) : (
+        <ChatInput onSend={onSend} disabled={isStreaming} />
+      )}
     </div>
   );
 }
@@ -115,6 +145,9 @@ function StreamingText({ text }: { text: string }) {
     // Remove SUMMARY blocks
     t = t.replace(/\[SUMMARY\][\s\S]*?\[\/SUMMARY\]/g, '\n📋 Summary loading...\n');
     t = t.replace(/\[SUMMARY\][\s\S]*$/, '\n📋 Summary loading...\n');
+    // Remove RESOURCES blocks
+    t = t.replace(/\[RESOURCES\][\s\S]*?\[\/RESOURCES\]/g, '\n🔗 Resources loading...\n');
+    t = t.replace(/\[RESOURCES\][\s\S]*$/, '\n🔗 Resources loading...\n');
     // Remove $$ math blocks (show inline)
     t = t.replace(/\$\$([^$]*)\$\$/g, ' $1 ');
     return t.trim();

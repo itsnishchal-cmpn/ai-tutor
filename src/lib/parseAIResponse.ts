@@ -1,4 +1,4 @@
-import type { RichContentBlock, QuizBlock } from '../types/chat';
+import type { RichContentBlock, QuizBlock, ResourcesBlock, ResourceLink } from '../types/chat';
 
 let quizCounter = 0;
 
@@ -41,12 +41,36 @@ function parseSummaryBlock(raw: string): { content: string; keyPoints: string[] 
   return { content, keyPoints };
 }
 
+export function parseResourcesBlock(raw: string): ResourcesBlock {
+  const headingMatch = raw.match(/HEADING:\s*(.+?)(?:\n|$)/);
+  const heading = headingMatch?.[1]?.trim() ?? 'Extra Resources';
+  const linkMatches = raw.match(/^LINK:\s*.+$/gm);
+  const links: ResourceLink[] = [];
+
+  if (linkMatches) {
+    for (const line of linkMatches) {
+      // Format: LINK: [type] Title | URL
+      const m = line.match(/^LINK:\s*\[(\w+)\]\s*(.+?)\s*\|\s*(.+)$/);
+      if (m) {
+        const linkType = m[1].toLowerCase() as ResourceLink['type'];
+        links.push({
+          type: ['video', 'article', 'practice'].includes(linkType) ? linkType : 'article',
+          title: m[2].trim(),
+          url: m[3].trim(),
+        });
+      }
+    }
+  }
+
+  return { type: 'resources', heading, links };
+}
+
 export function parseAIResponse(text: string): RichContentBlock[] {
   const blocks: RichContentBlock[] = [];
   let remaining = text;
 
   // Pattern for all special blocks
-  const blockPattern = /\[DIAGRAM:([a-z-]+)\]|\[VIDEO:([a-z-]+)\]|\[QUIZ:(MCQ|TYPE)\]([\s\S]*?)\[\/QUIZ\]|\[SUMMARY\]([\s\S]*?)\[\/SUMMARY\]|\$\$([\s\S]*?)\$\$/g;
+  const blockPattern = /\[DIAGRAM:([a-z-]+)\]|\[VIDEO:([a-z-]+)\]|\[QUIZ:(MCQ|TYPE)\]([\s\S]*?)\[\/QUIZ\]|\[SUMMARY\]([\s\S]*?)\[\/SUMMARY\]|\[RESOURCES\]([\s\S]*?)\[\/RESOURCES\]|\$\$([\s\S]*?)\$\$/g;
 
   let lastIndex = 0;
   let match;
@@ -77,8 +101,11 @@ export function parseAIResponse(text: string): RichContentBlock[] {
       const summary = parseSummaryBlock(match[5]);
       blocks.push({ type: 'summary', ...summary });
     } else if (match[6]) {
+      // RESOURCES
+      blocks.push(parseResourcesBlock(match[6]));
+    } else if (match[7]) {
       // DISPLAY MATH
-      blocks.push({ type: 'math', content: match[6].trim(), display: true });
+      blocks.push({ type: 'math', content: match[7].trim(), display: true });
     }
 
     lastIndex = match.index + match[0].length;
