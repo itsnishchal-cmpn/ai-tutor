@@ -52,10 +52,10 @@ export default function ProgressPanel() {
           </div>
           <p className="text-xs text-gray-500">
             {completedTopics === 0
-              ? 'Apna pehla topic select karo aur padhai shuru karo! 📚'
+              ? 'Select your first topic and start learning! 📚'
               : completedTopics < 5
-                ? 'Bahut accha chal raha hai! Aur topics try karo! 💪'
-                : 'Amazing progress! Tum toh topper ban jaoge! 🌟'}
+                ? 'Great progress! Try more topics! 💪'
+                : 'Amazing progress! You\'re on fire! 🌟'}
           </p>
         </div>
       </div>

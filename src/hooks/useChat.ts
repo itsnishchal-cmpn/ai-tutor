@@ -13,8 +13,12 @@ export function useChat() {
   const { state, dispatch } = useChatContext();
   const { name } = useUser();
   const { markTopicStarted } = useProgress();
+
   const selectTopic = useCallback(
     (topicId: string) => {
+      // Don't re-select same topic
+      if (topicId === state.currentTopicId) return;
+
       // Save current chat if exists
       if (state.currentTopicId && state.messages.length > 0) {
         setItem(`chat_${state.currentTopicId}`, state.messages);
@@ -23,7 +27,12 @@ export function useChat() {
       // Load saved chat or start fresh
       const saved = getItem<Message[]>(`chat_${topicId}`, []);
       if (saved.length > 0) {
-        dispatch({ type: 'LOAD_MESSAGES', payload: { messages: saved, topicId } });
+        // Re-parse blocks for saved messages (blocks aren't serialized)
+        const restored = saved.map(m => ({
+          ...m,
+          blocks: m.role === 'assistant' ? parseAIResponse(m.content) : undefined,
+        }));
+        dispatch({ type: 'LOAD_MESSAGES', payload: { messages: restored, topicId } });
         return;
       }
 
@@ -31,7 +40,7 @@ export function useChat() {
       dispatch({ type: 'SET_TOPIC', payload: { topicId } });
       markTopicStarted(topicId);
 
-      // Trigger initial greeting
+      // Trigger initial greeting with topic-specific message
       const topicInfo = getTopicById(topicId);
       if (!topicInfo) return;
 
@@ -39,7 +48,7 @@ export function useChat() {
 
       dispatch({ type: 'START_STREAMING' });
       sendMessage({
-        messages: [{ role: 'user', content: `Hi! I want to learn about ${topicInfo.topic.title}. Can you teach me?` }],
+        messages: [{ role: 'user', content: `I want to learn about "${topicInfo.topic.title}" (${topicInfo.topic.description}). Please teach me this topic.` }],
         systemPrompt,
         onChunk: (chunk) => dispatch({ type: 'APPEND_STREAM', payload: { chunk } }),
         onDone: (fullText) => {
@@ -47,7 +56,7 @@ export function useChat() {
           dispatch({ type: 'FINISH_STREAMING', payload: { blocks } });
         },
         onError: (error) => {
-          const blocks = parseAIResponse(`Sorry ${name}, kuch technical problem aa gayi. Please dobara try karo! 🙏\n\nError: ${error}`);
+          const blocks = parseAIResponse(`Sorry, a technical error occurred. Please try again.\n\nError: ${error}`);
           dispatch({ type: 'FINISH_STREAMING', payload: { blocks } });
         },
       });
@@ -81,14 +90,14 @@ export function useChat() {
           if (state.currentTopicId) {
             const updatedMessages = [
               ...state.messages,
-              { id: 'temp-user', role: 'user' as const, content, timestamp: Date.now() },
-              { id: 'temp-ai', role: 'assistant' as const, content: fullText, blocks, timestamp: Date.now() },
+              { id: `u-${Date.now()}`, role: 'user' as const, content, timestamp: Date.now() },
+              { id: `a-${Date.now()}`, role: 'assistant' as const, content: fullText, blocks, timestamp: Date.now() },
             ];
             setItem(`chat_${state.currentTopicId}`, updatedMessages);
           }
         },
         onError: () => {
-          const blocks = parseAIResponse(`Oops! Kuch problem ho gayi. Please try again. 🙏`);
+          const blocks = parseAIResponse(`Oops! Something went wrong. Please try again.`);
           dispatch({ type: 'FINISH_STREAMING', payload: { blocks } });
         },
       });

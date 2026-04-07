@@ -15,6 +15,7 @@ interface Props {
   onSend: (message: string) => void;
   currentTopicId: string | null;
   onSelectTopic: (topicId: string) => void;
+  onTopicComplete?: () => void;
 }
 
 export default function ChatInterface({
@@ -24,6 +25,7 @@ export default function ChatInterface({
   onSend,
   currentTopicId,
   onSelectTopic,
+  onTopicComplete,
 }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -41,9 +43,9 @@ export default function ChatInterface({
         <div className="w-16 h-16 rounded-2xl bg-brand-50 flex items-center justify-center mb-4">
           <MessageSquare size={28} className="text-brand-400" />
         </div>
-        <h2 className="text-xl font-semibold text-gray-800 mb-2">Topic Select Karo!</h2>
+        <h2 className="text-xl font-semibold text-gray-800 mb-2">Select a Topic</h2>
         <p className="text-gray-500 text-sm max-w-sm mb-6">
-          Left side mein curriculum se koi topic choose karo, phir hum saath mein padhenge! 📚
+          Choose a topic from the curriculum on the left to start learning! 📚
         </p>
 
         {firstTopic && (
@@ -62,9 +64,14 @@ export default function ChatInterface({
   return (
     <div className="h-full flex flex-col bg-gray-50">
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar py-4 space-y-1">
+      <div className="flex-1 overflow-y-auto custom-scrollbar pt-6 pb-4 space-y-1">
         {messages.map(msg => (
-          <MessageBubble key={msg.id} message={msg} />
+          <MessageBubble
+            key={msg.id}
+            message={msg}
+            onQuizContinue={!isStreaming ? onSend : undefined}
+            onTopicComplete={onTopicComplete}
+          />
         ))}
 
         {/* Streaming content preview */}

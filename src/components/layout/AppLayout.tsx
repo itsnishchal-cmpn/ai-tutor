@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CurriculumSidebar from './CurriculumSidebar';
 import ProgressPanel from './ProgressPanel';
 import ChatInterface from '../chat/ChatInterface';
 import { useChat } from '../../hooks/useChat';
 import { useUser } from '../../contexts/UserContext';
+import { useProgress } from '../../contexts/ProgressContext';
 import {
   Menu,
   X,
@@ -18,12 +19,19 @@ export default function AppLayout() {
   const [progressOpen, setProgressOpen] = useState(false);
   const { currentTopicId, selectTopic, messages, isStreaming, streamingContent, sendUserMessage } = useChat();
   const { clearUser } = useUser();
+  const { markTopicCompleted } = useProgress();
   const navigate = useNavigate();
 
   const handleLogout = () => {
     clearUser();
     navigate('/');
   };
+
+  const handleTopicComplete = useCallback(() => {
+    if (currentTopicId) {
+      markTopicCompleted(currentTopicId);
+    }
+  }, [currentTopicId, markTopicCompleted]);
 
   return (
     <div className="h-screen flex flex-col bg-gray-50">
@@ -100,6 +108,7 @@ export default function AppLayout() {
             onSend={sendUserMessage}
             currentTopicId={currentTopicId}
             onSelectTopic={selectTopic}
+            onTopicComplete={handleTopicComplete}
           />
         </main>
 

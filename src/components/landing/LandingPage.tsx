@@ -37,15 +37,15 @@ export default function LandingPage() {
         {/* Name Input Card */}
         <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
           <h2 className="text-xl font-semibold text-gray-800 mb-1">
-            Namaste! 🙏
+            Welcome! 👋
           </h2>
           <p className="text-gray-500 mb-6">
-            Apna naam batao, phir shuru karte hain!
+            Enter your name to start learning
           </p>
 
           <form onSubmit={handleSubmit}>
             <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-              Tumhara naam
+              Your Name
             </label>
             <input
               id="name"
@@ -63,7 +63,7 @@ export default function LandingPage() {
               disabled={!input.trim()}
               className="w-full mt-4 px-6 py-3 bg-brand-600 text-white rounded-xl font-semibold text-lg hover:bg-brand-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
             >
-              Shuru Karein
+              Start Learning
               <ArrowRight size={20} />
             </button>
           </form>
@@ -71,7 +71,7 @@ export default function LandingPage() {
 
         {/* Feature badges */}
         <div className="flex flex-wrap justify-center gap-2 mt-6">
-          {['Hinglish Mein Padho', 'Interactive Quizzes', 'Visual Diagrams'].map(tag => (
+          {['Friendly AI Tutor', 'Interactive Quizzes', 'Visual Diagrams'].map(tag => (
             <span
               key={tag}
               className="px-3 py-1 bg-white/80 rounded-full text-xs font-medium text-gray-600 border border-gray-200"

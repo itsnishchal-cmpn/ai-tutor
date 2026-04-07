@@ -5,9 +5,11 @@ import { Bot, User } from 'lucide-react';
 
 interface Props {
   message: Message;
+  onQuizContinue?: (message: string) => void;
+  onTopicComplete?: () => void;
 }
 
-export default function MessageBubble({ message }: Props) {
+export default function MessageBubble({ message, onQuizContinue, onTopicComplete }: Props) {
   const isUser = message.role === 'user';
   const blocks = message.blocks ?? parseAIResponse(message.content);
 
@@ -39,7 +41,11 @@ export default function MessageBubble({ message }: Props) {
         {isUser ? (
           <p className="text-sm">{message.content}</p>
         ) : (
-          <MessageContent blocks={blocks} />
+          <MessageContent
+            blocks={blocks}
+            onQuizContinue={onQuizContinue}
+            onTopicComplete={onTopicComplete}
+          />
         )}
       </div>
     </div>

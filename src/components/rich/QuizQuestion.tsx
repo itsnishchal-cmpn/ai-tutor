@@ -1,48 +1,23 @@
 import { useState } from 'react';
 import { useProgress } from '../../contexts/ProgressContext';
 import { useChatContext } from '../../contexts/ChatContext';
-import { CheckCircle2, XCircle, HelpCircle } from 'lucide-react';
+import { CheckCircle2, XCircle, HelpCircle, ArrowRight } from 'lucide-react';
 import type { QuizBlock } from '../../types/chat';
 
 interface Props {
   quiz: QuizBlock;
+  onContinue?: (message: string) => void;
 }
 
-export default function QuizQuestion({ quiz }: Props) {
+export default function QuizQuestion({ quiz, onContinue }: Props) {
   const [selected, setSelected] = useState<string | null>(null);
   const [typeInput, setTypeInput] = useState('');
   const [answered, setAnswered] = useState(false);
+  const [continued, setContinued] = useState(false);
   const { addQuizResult } = useProgress();
   const { state } = useChatContext();
 
-  const checkAnswer = () => {
-    const userAnswer = quiz.quizType === 'mcq' ? selected : typeInput.trim();
-    if (!userAnswer) return;
-
-    let isCorrect = false;
-    if (quiz.quizType === 'mcq') {
-      // Match by letter (A, B, C, D) or by full text
-      const correctLetter = quiz.correctAnswer.trim().charAt(0).toUpperCase();
-      const selectedLetter = userAnswer.charAt(0).toUpperCase();
-      isCorrect = selectedLetter === correctLetter;
-    } else {
-      isCorrect = userAnswer.toLowerCase() === quiz.correctAnswer.toLowerCase();
-    }
-
-    setAnswered(true);
-
-    if (state.currentTopicId) {
-      addQuizResult({
-        quizId: quiz.id,
-        topicId: state.currentTopicId,
-        selectedAnswer: userAnswer,
-        isCorrect,
-        timestamp: Date.now(),
-      });
-    }
-  };
-
-  const isCorrect = () => {
+  const getIsCorrect = () => {
     const userAnswer = quiz.quizType === 'mcq' ? selected : typeInput.trim();
     if (!userAnswer) return false;
     if (quiz.quizType === 'mcq') {
@@ -50,6 +25,36 @@ export default function QuizQuestion({ quiz }: Props) {
       return userAnswer.charAt(0).toUpperCase() === correctLetter;
     }
     return userAnswer.toLowerCase() === quiz.correctAnswer.toLowerCase();
+  };
+
+  const checkAnswer = () => {
+    const userAnswer = quiz.quizType === 'mcq' ? selected : typeInput.trim();
+    if (!userAnswer) return;
+
+    const correct = getIsCorrect();
+    setAnswered(true);
+
+    if (state.currentTopicId) {
+      addQuizResult({
+        quizId: quiz.id,
+        topicId: state.currentTopicId,
+        selectedAnswer: userAnswer,
+        isCorrect: correct,
+        timestamp: Date.now(),
+      });
+    }
+  };
+
+  const handleContinue = () => {
+    if (!onContinue || continued) return;
+    setContinued(true);
+    const correct = getIsCorrect();
+    const userAnswer = quiz.quizType === 'mcq' ? selected : typeInput.trim();
+    if (correct) {
+      onContinue(`I answered "${userAnswer}" — that's correct! Please continue teaching.`);
+    } else {
+      onContinue(`I answered "${userAnswer}" but the correct answer was "${quiz.correctAnswer}". Can you explain why?`);
+    }
   };
 
   const optionLetters = ['A', 'B', 'C', 'D'];
@@ -117,26 +122,38 @@ export default function QuizQuestion({ quiz }: Props) {
           Check Answer
         </button>
       ) : (
-        <div
-          className={`p-3 rounded-lg text-sm ${
-            isCorrect()
-              ? 'bg-green-50 border border-green-200 text-green-800'
-              : 'bg-red-50 border border-red-200 text-red-800'
-          }`}
-        >
-          <div className="flex items-center gap-1.5 font-medium mb-1">
-            {isCorrect() ? (
-              <>
-                <CheckCircle2 size={16} /> Sahi jawab! 🎉
-              </>
-            ) : (
-              <>
-                <XCircle size={16} /> Correct answer: {quiz.correctAnswer}
-              </>
-            )}
+        <>
+          <div
+            className={`p-3 rounded-lg text-sm ${
+              getIsCorrect()
+                ? 'bg-green-50 border border-green-200 text-green-800'
+                : 'bg-red-50 border border-red-200 text-red-800'
+            }`}
+          >
+            <div className="flex items-center gap-1.5 font-medium mb-1">
+              {getIsCorrect() ? (
+                <>
+                  <CheckCircle2 size={16} /> Correct! 🎉
+                </>
+              ) : (
+                <>
+                  <XCircle size={16} /> Correct answer: {quiz.correctAnswer}
+                </>
+              )}
+            </div>
+            {quiz.explanation && <p className="text-xs mt-1 opacity-80">{quiz.explanation}</p>}
           </div>
-          {quiz.explanation && <p className="text-xs mt-1 opacity-80">{quiz.explanation}</p>}
-        </div>
+
+          {onContinue && !continued && (
+            <button
+              onClick={handleContinue}
+              className="mt-3 flex items-center gap-1.5 px-4 py-1.5 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 transition-colors"
+            >
+              Continue
+              <ArrowRight size={14} />
+            </button>
+          )}
+        </>
       )}
     </div>
   );
