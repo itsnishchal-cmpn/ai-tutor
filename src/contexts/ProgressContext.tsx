@@ -71,6 +71,9 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
         quizResults: [],
         lastAccessed: Date.now(),
       };
+      // Deduplicate — only one result per quiz ID
+      const alreadyAnswered = topicProg.quizResults.some(r => r.quizId === answer.quizId);
+      if (alreadyAnswered) return prev;
       const updated = {
         ...prev,
         [answer.topicId]: {

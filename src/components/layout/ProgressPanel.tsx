@@ -44,9 +44,9 @@ export default function ProgressPanel() {
         {/* Quizzes answered */}
         <StatCard
           icon={<Target size={20} className="text-brand-500" />}
-          label="Quizzes Answered"
-          value={`${totalQuizzes}`}
-          subtext={totalQuizzes > 0 ? `${correctQuizzes} correct` : 'No quizzes yet'}
+          label="Quiz Score"
+          value={totalQuizzes > 0 ? `${correctQuizzes}/${totalQuizzes}` : '—'}
+          subtext={totalQuizzes > 0 ? `${correctQuizzes} correct out of ${totalQuizzes} answered` : 'No quizzes yet'}
           color="blue"
           progress={totalQuizzes > 0 ? (correctQuizzes / totalQuizzes) * 100 : 0}
         />
