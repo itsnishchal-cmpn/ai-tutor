@@ -6,6 +6,9 @@ import Kite from '../diagrams/Kite';
 import Trapezium from '../diagrams/Trapezium';
 import GenericQuadrilateral from '../diagrams/GenericQuadrilateral';
 import DiagonalDemo from '../diagrams/DiagonalDemo';
+import PolygonIntro from '../diagrams/PolygonIntro';
+import AngleSum from '../diagrams/AngleSum';
+import QuadrilateralFamily from '../diagrams/QuadrilateralFamily';
 
 const diagramMap: Record<string, React.FC> = {
   parallelogram: Parallelogram,
@@ -16,6 +19,9 @@ const diagramMap: Record<string, React.FC> = {
   trapezium: Trapezium,
   'generic-quadrilateral': GenericQuadrilateral,
   'diagonal-demo': DiagonalDemo,
+  'polygon-intro': PolygonIntro,
+  'angle-sum': AngleSum,
+  'quadrilateral-family': QuadrilateralFamily,
 };
 
 interface Props {

@@ -1,8 +1,8 @@
 import { getTopicById } from './curriculum';
 
 const topicGreetingHints: Record<string, string> = {
-  'polygons-basics': 'Start with real-life polygon examples — rangoli patterns, stop signs, honeycomb. Do NOT show any quadrilateral-specific diagram here — this topic is about polygons in general.',
-  'angle-sum-property': 'Hook with "Why does every triangle have 180°?" and build up to the (n-2)×180° formula. Show how dividing into triangles works.',
+  'polygons-basics': 'Start with real-life polygon examples — rangoli patterns, stop signs, honeycomb. Use [DIAGRAM:polygon-intro] to show different polygon types.',
+  'angle-sum-property': 'Hook with "Why does every triangle have 180°?" and build up to the (n-2)×180° formula. Use [DIAGRAM:angle-sum] to show how dividing into triangles works.',
   'quadrilateral-basics': 'Connect to everyday shapes — books, screens, tables are all quadrilaterals. Use [DIAGRAM:generic-quadrilateral] here.',
   'parallelogram': 'Use the example of a tilted door or a leaning bookshelf. Use [DIAGRAM:parallelogram].',
   'rhombus': 'Use kite-flying as the hook — a kite looks like a rhombus! Use [DIAGRAM:rhombus].',
@@ -11,7 +11,7 @@ const topicGreetingHints: Record<string, string> = {
   'kite': 'Patang (kite) flying during Makar Sankranti! Use [DIAGRAM:kite].',
   'trapezium': 'A bucket viewed from the side is a trapezium shape. Use [DIAGRAM:trapezium].',
   'diagonal-properties': 'Compare how diagonals behave differently in different quadrilaterals. Use [DIAGRAM:diagonal-demo].',
-  'quadrilateral-family': 'Show how square is the "most special" — it is both a rectangle AND a rhombus. Build the family tree step by step.',
+  'quadrilateral-family': 'Show how square is the "most special" — it is both a rectangle AND a rhombus. Use [DIAGRAM:quadrilateral-family] to show the family tree.',
 };
 
 export function buildSystemPrompt(studentName: string, topicId: string): string {
@@ -64,10 +64,12 @@ NEVER respond in pure English. ALWAYS mix Hindi naturally into your responses. U
 
 ### Diagrams — ONLY use when relevant to current topic
 [DIAGRAM:id] — Available IDs (ONLY these, do NOT invent new ones):
+- polygon-intro (for polygons-basics topic)
+- angle-sum (for angle-sum-property topic)
+- generic-quadrilateral (for quadrilateral-basics topic)
 - parallelogram, rhombus, rectangle, square, kite, trapezium
-- generic-quadrilateral (ONLY for quadrilateral-basics topic)
-- diagonal-demo (ONLY for diagonal-properties topic)
-- There is NO diagram for polygons-basics or angle-sum-property topics. Do NOT use [DIAGRAM:...] for these topics.
+- diagonal-demo (for diagonal-properties topic)
+- quadrilateral-family (for quadrilateral-family topic)
 
 ### Videos
 [VIDEO:id] — Available IDs:
