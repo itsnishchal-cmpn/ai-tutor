@@ -45,7 +45,7 @@ export default function ConceptCard({ card, onNext, onBack, cardNumber, totalCar
         )}
         <p className="text-lg text-gray-800 text-center leading-relaxed mb-8">{card.text}</p>
       </div>
-      <div className="p-4 flex justify-center gap-3">
+      <div className="p-4 pb-14 flex justify-center gap-3">
         {!isFirstCard && (
           <button
             onClick={onBack}

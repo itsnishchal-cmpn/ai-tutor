@@ -21,7 +21,7 @@ export default function QuizCard({
   const hearts = 3 - wrongAttempts;
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col pb-12">
       <div className="flex items-center justify-between px-6 py-3">
         <span className="text-sm text-gray-500 font-medium">Quiz {quizNumber + 1}/{totalQuizzes}</span>
         <div className="flex gap-1">

@@ -191,10 +191,12 @@ export default function LessonContainer() {
       )}
 
       {['CONCEPT_CARDS', 'QUIZ_CARDS'].includes(state.phase) && (
-        <button onClick={() => setDoubtOpen(true)}
-          className="fixed bottom-6 right-6 w-12 h-12 bg-brand-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-brand-700 transition-colors z-40"
-          title="Ask a doubt">
-          <MessageCircle size={22} />
+        <button
+          onClick={() => setDoubtOpen(true)}
+          className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-center gap-2 py-3 bg-amber-50 border-t border-amber-200 text-amber-700 hover:bg-amber-100 transition-colors"
+        >
+          <MessageCircle size={18} />
+          <span className="text-sm font-medium">Have a doubt? Ask AI</span>
         </button>
       )}
 
