@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { useChatContext } from '../contexts/ChatContext';
 import { useUser } from '../contexts/UserContext';
 import { useProgress } from '../contexts/ProgressContext';
-import { sendMessage, formatMessagesForAPI } from '../lib/api';
+import { sendMessageWithRetry, formatMessagesForAPI } from '../lib/api';
 import { parseAIResponse } from '../lib/parseAIResponse';
 import { buildSystemPrompt } from '../data/systemPrompt';
 import { getTopicById } from '../data/curriculum';
@@ -47,7 +47,7 @@ export function useChat() {
       const systemPrompt = buildSystemPrompt(name, topicId);
 
       dispatch({ type: 'START_STREAMING' });
-      sendMessage({
+      sendMessageWithRetry({
         messages: [{ role: 'user', content: `I want to learn about "${topicInfo.topic.title}" (${topicInfo.topic.description}). Please teach me this topic.` }],
         systemPrompt,
         onChunk: (chunk) => dispatch({ type: 'APPEND_STREAM', payload: { chunk } }),
@@ -79,7 +79,7 @@ export function useChat() {
       ];
 
       dispatch({ type: 'START_STREAMING' });
-      sendMessage({
+      sendMessageWithRetry({
         messages: allMessages,
         systemPrompt,
         onChunk: (chunk) => dispatch({ type: 'APPEND_STREAM', payload: { chunk } }),

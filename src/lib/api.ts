@@ -73,3 +73,49 @@ export async function sendMessage({ messages, systemPrompt, onChunk, onDone, onE
 export function formatMessagesForAPI(messages: Message[]) {
   return messages.map(m => ({ role: m.role, content: m.content }));
 }
+
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+interface SendMessageWithRetryParams extends SendMessageParams {
+  maxRetries?: number;
+}
+
+export async function sendMessageWithRetry({
+  maxRetries = 3,
+  onError,
+  ...params
+}: SendMessageWithRetryParams) {
+  const delays = [1000, 2000, 4000];
+
+  for (let attempt = 0; attempt <= maxRetries - 1; attempt++) {
+    let succeeded = false;
+    let capturedError = '';
+
+    await new Promise<void>((resolve) => {
+      sendMessage({
+        ...params,
+        onDone: (fullText) => {
+          succeeded = true;
+          params.onDone(fullText);
+          resolve();
+        },
+        onError: (error) => {
+          capturedError = error;
+          resolve();
+        },
+      });
+    });
+
+    if (succeeded) return;
+
+    const isLastAttempt = attempt === maxRetries - 1;
+    if (isLastAttempt) {
+      onError(`${capturedError} (after ${maxRetries} retries)`);
+      return;
+    }
+
+    await sleep(delays[attempt] ?? 4000);
+  }
+}
