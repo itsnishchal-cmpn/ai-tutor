@@ -39,19 +39,12 @@ export function buildCardsPrompt(
   template: LessonTemplate
 ): { system: string; user: string } {
   const ncert = getNCERTContent(template.topicId);
-  const hookHint = hookExamples[template.topicId] ?? '';
+  const hookHint = hookExamples[template.topicId] ?? 'real-life examples that Indian students relate to';
 
-  const cardInstructions = template.cards.map((c, i) => {
-    let inst = `Card ${i + 1} (id: "${c.id}", type: ${c.type}): "${c.subConcept}"`;
-    if (c.type === 'hook') {
-      inst += `\n  INSTRUCTION: Write a warm real-life hook using these examples: ${hookHint}. Do NOT teach math yet — just make the student curious.`;
-    } else if (c.type === 'formula') {
-      inst += `\n  INSTRUCTION: Present the formula clearly with a one-line explanation. Use ONLY facts from the NCERT content below.`;
-    } else {
-      inst += `\n  INSTRUCTION: Teach this ONE specific fact. Use ONLY the NCERT content below. 1-2 sentences max.`;
-    }
-    return inst;
-  }).join('\n');
+  // List sub-concepts as guidance, but let AI decide card count
+  const subConcepts = template.cards.map(c => `- ${c.subConcept} (${c.type})`).join('\n');
+
+  // Hook hint is used in system prompt below
 
   const system = `You generate concept card text for PadhAI, an AI math tutor for Class 8 Indian students.
 ${HINGLISH_RULES}
@@ -70,21 +63,27 @@ FLOW RULES — VERY IMPORTANT:
 - NEVER jump to a new concept without connecting it to what came before.
 - The sequence should feel like one smooth explanation broken into bite-sized pieces.
 - The last card should feel like a natural conclusion of the explanation.
+- For the hook card, use these real-life examples: ${hookHint}
 
 Return ONLY a valid JSON array. No markdown, no code fences, no extra text.
 
 NCERT TEXTBOOK CONTENT FOR THIS TOPIC:
 ${ncert}`;
 
-  const user = `Generate ${template.cards.length} concept cards for topic "${topicTitle}".
+  const user = `Generate concept cards for topic "${topicTitle}".
 
-The cards must flow as ONE continuous explanation, like a tutor speaking card by card.
+These sub-concepts need to be covered (use as guidance, not rigid structure):
+${subConcepts}
 
-Card sequence:
-${cardInstructions}
+IMPORTANT RULES FOR CARD COUNT:
+- Generate between 6 to 10 cards, depending on how much content this topic has.
+- Simple topics: 6 cards. Complex topics with many properties: 8-10 cards.
+- Card 1 must be a "hook" type. All others are "concept" (or "formula" for math formulas, "example" for worked examples).
+- The cards must flow as ONE continuous explanation, like a tutor speaking card by card.
+- Assign each card a unique id like "card-1", "card-2", etc.
 
 Return JSON array:
-[{ "id": "card-id", "type": "hook|concept|formula|example", "text": "Hinglish text in Roman script only" }]`;
+[{ "id": "card-1", "type": "hook|concept|formula|example", "text": "Hinglish text in Roman script only" }]`;
 
   return { system, user };
 }

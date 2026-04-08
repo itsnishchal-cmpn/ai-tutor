@@ -62,10 +62,22 @@ export async function generateCards(
   const json = await callChatAPI(system, user);
   const cards: GeneratedCard[] = JSON.parse(json);
 
-  return cards.map((card, i) => ({
-    ...card,
-    diagramConfig: template.cards[i]?.diagramConfig ?? card.diagramConfig,
-  }));
+  // Assign diagram configs from template to generated cards
+  // Template cards with diagrams are matched to concept cards in order
+  const diagramConfigs = template.cards
+    .filter(c => c.diagramConfig)
+    .map(c => c.diagramConfig!);
+  let diagramIdx = 0;
+
+  return cards.map((card) => {
+    // Skip hook cards for diagrams, assign to concept cards in order
+    if (card.type !== 'hook' && diagramIdx < diagramConfigs.length) {
+      const config = diagramConfigs[diagramIdx];
+      diagramIdx++;
+      return { ...card, diagramConfig: config };
+    }
+    return card;
+  });
 }
 
 // CALL 2: Generate quizzes (~800 tokens, uses card text as context)
