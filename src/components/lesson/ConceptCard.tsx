@@ -1,23 +1,25 @@
 import { useEffect } from 'react';
 import type { GeneratedCard } from '../../types/lesson';
 import DiagramRenderer from '../rich/DiagramRenderer';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ArrowLeft } from 'lucide-react';
 
 interface Props {
   card: GeneratedCard;
   onNext: () => void;
+  onBack?: () => void;
   cardNumber: number;
   totalCards: number;
   onSpeak?: (text: string) => void;
 }
 
-export default function ConceptCard({ card, onNext, cardNumber, totalCards, onSpeak }: Props) {
-  // Auto-speak card text when card appears
+export default function ConceptCard({ card, onNext, onBack, cardNumber, totalCards, onSpeak }: Props) {
   useEffect(() => {
     if (onSpeak && card.text) {
       onSpeak(card.text);
     }
   }, [card.text, onSpeak]);
+
+  const isFirstCard = cardNumber === 0;
 
   return (
     <div className="flex flex-col h-full">
@@ -39,7 +41,15 @@ export default function ConceptCard({ card, onNext, cardNumber, totalCards, onSp
         )}
         <p className="text-lg text-gray-800 text-center leading-relaxed mb-8">{card.text}</p>
       </div>
-      <div className="p-4 flex justify-center">
+      <div className="p-4 flex justify-center gap-3">
+        {!isFirstCard && (
+          <button
+            onClick={onBack}
+            className="flex items-center gap-2 px-6 py-3 bg-gray-100 text-gray-600 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+          >
+            <ArrowLeft size={18} /> Back
+          </button>
+        )}
         <button
           onClick={onNext}
           className="flex items-center gap-2 px-8 py-3 bg-brand-600 text-white rounded-xl font-medium hover:bg-brand-700 transition-colors shadow-sm"

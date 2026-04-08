@@ -65,6 +65,11 @@ function lessonReducer(state: LessonState, action: LessonAction): LessonState {
       return { ...state, currentCardIndex: nextIndex };
     }
 
+    case 'PREV_CARD': {
+      if (state.currentCardIndex <= 0) return state;
+      return { ...state, currentCardIndex: state.currentCardIndex - 1 };
+    }
+
     case 'START_QUIZ':
       return {
         ...state,

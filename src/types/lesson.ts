@@ -86,6 +86,7 @@ export type LessonAction =
   | { type: 'SKIP_VIDEO' }
   | { type: 'FINISH_VIDEO' }
   | { type: 'NEXT_CARD' }
+  | { type: 'PREV_CARD' }
   | { type: 'START_QUIZ' }
   | { type: 'SUBMIT_QUIZ_ANSWER'; payload: { selectedOption: string; isCorrect: boolean } }
   | { type: 'RETRY_QUIZ' }

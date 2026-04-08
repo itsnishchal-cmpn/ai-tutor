@@ -14,7 +14,7 @@ import VoiceToggle from '../voice/VoiceToggle';
 
 export default function LessonContainer() {
   const {
-    state, skipVideo, finishVideo, nextCard, startQuiz,
+    state, skipVideo, finishVideo, prevCard, nextCard, startQuiz,
     submitQuizAnswer, retryQuiz, nextQuiz, startTopic,
     completeTopic,
     nextTopicId, nextTopicTitle,
@@ -40,11 +40,16 @@ export default function LessonContainer() {
     }
   }, [state.lesson, state.currentQuizIndex, completeTopic, nextQuiz]);
 
-  // Stop TTS when advancing cards or changing phases
+  // Stop TTS when advancing cards
   const handleNextCard = useCallback(() => {
     stop();
     nextCard();
   }, [stop, nextCard]);
+
+  const handlePrevCard = useCallback(() => {
+    stop();
+    prevCard();
+  }, [stop, prevCard]);
 
   if (!state.topicId) {
     return (
@@ -99,6 +104,7 @@ export default function LessonContainer() {
           cards={state.lesson.cards}
           currentIndex={state.currentCardIndex}
           onNext={handleNextCard}
+          onBack={handlePrevCard}
           onSpeak={voiceEnabled ? speak : undefined}
         />
       )}

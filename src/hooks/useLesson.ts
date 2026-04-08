@@ -96,6 +96,7 @@ export function useLesson() {
 
   const skipVideo = useCallback(() => dispatch({ type: 'SKIP_VIDEO' }), [dispatch]);
   const finishVideo = useCallback(() => dispatch({ type: 'FINISH_VIDEO' }), [dispatch]);
+  const prevCard = useCallback(() => dispatch({ type: 'PREV_CARD' }), [dispatch]);
 
   const nextCard = useCallback(() => {
     if (state.topicId) {
@@ -197,6 +198,7 @@ export function useLesson() {
     startTopic,
     skipVideo,
     finishVideo,
+    prevCard,
     nextCard,
     startQuiz,
     submitQuizAnswer,
