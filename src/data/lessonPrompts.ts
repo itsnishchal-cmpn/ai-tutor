@@ -55,17 +55,32 @@ export function buildCardsPrompt(
 
   const system = `You generate concept card text for PadhAI, an AI math tutor for Class 8 Indian students.
 ${HINGLISH_RULES}
-OTHER RULES:
+CONTENT RULES:
 - Each card: 1-2 sentences MAXIMUM.
 - Address the student as "${studentName}".
-- Use ONLY facts from the NCERT content provided. Do NOT invent or add facts.
-- Return ONLY a valid JSON array. No markdown, no code fences, no extra text.
+- Use ONLY facts from the NCERT content provided. Do NOT invent facts.
+
+FLOW RULES — VERY IMPORTANT:
+- The cards are a CONTINUOUS CONVERSATION, like a tutor talking to a student.
+- Card 1 (hook) sets the scene with a real-life example and ends with curiosity.
+- Card 2 MUST pick up where Card 1 left off. If Card 1 asked a question, Card 2 answers it and introduces the concept.
+- Each subsequent card BUILDS on the previous one. Use connector phrases like:
+  "Ab dekho...", "Iska matlab hai ki...", "Aur ek important baat...", "Ab aage badhte hain...", "Yaad rakhna...", "Chalo ab dekhte hain..."
+- NEVER repeat information from a previous card.
+- NEVER jump to a new concept without connecting it to what came before.
+- The sequence should feel like one smooth explanation broken into bite-sized pieces.
+- The last card should feel like a natural conclusion of the explanation.
+
+Return ONLY a valid JSON array. No markdown, no code fences, no extra text.
 
 NCERT TEXTBOOK CONTENT FOR THIS TOPIC:
 ${ncert}`;
 
-  const user = `Generate ${template.cards.length} concept cards for topic "${topicTitle}":
+  const user = `Generate ${template.cards.length} concept cards for topic "${topicTitle}".
 
+The cards must flow as ONE continuous explanation, like a tutor speaking card by card.
+
+Card sequence:
 ${cardInstructions}
 
 Return JSON array:
