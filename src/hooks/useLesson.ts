@@ -101,40 +101,69 @@ export function useLesson() {
     recordTopicStart(topicId);
     updateStreak();
 
-    // Check full cache first
     const cacheKey = `lesson_${topicId}`;
     const cached = getItem<GeneratedLesson | null>(cacheKey, null);
+
+    // Full cache hit — cards AND quizzes both present
     if (cached && cached.cards?.length && cached.quizzes?.length) {
-      cached.cards = cached.cards.map((card, i) => ({
-        ...card,
-        diagramConfig: template.cards[i]?.diagramConfig ?? card.diagramConfig,
-      }));
+      const diagramConfigs = template.cards.filter(c => c.diagramConfig).map(c => c.diagramConfig!);
+      let dIdx = 0;
+      cached.cards = cached.cards.map(card => {
+        if (card.type !== 'hook' && dIdx < diagramConfigs.length) {
+          return { ...card, diagramConfig: diagramConfigs[dIdx++] };
+        }
+        return card;
+      });
       dispatch({ type: 'LESSON_LOADED', payload: { lesson: cached } });
       return;
     }
 
+    // Partial cache — cards exist but quizzes don't
+    if (cached && cached.cards?.length && !cached.quizzes?.length) {
+      const diagramConfigs = template.cards.filter(c => c.diagramConfig).map(c => c.diagramConfig!);
+      let dIdx = 0;
+      cached.cards = cached.cards.map(card => {
+        if (card.type !== 'hook' && dIdx < diagramConfigs.length) {
+          return { ...card, diagramConfig: diagramConfigs[dIdx++] };
+        }
+        return card;
+      });
+      dispatch({ type: 'CARDS_LOADED', payload: { cards: cached.cards } });
+
+      // Generate quizzes now
+      const topicInfo = getTopicById(topicId);
+      const topicTitle = topicInfo?.topic.title ?? topicId;
+      const cardTexts = cached.cards.map(c => c.text);
+      generateQuizzes(name, topicTitle, template, cardTexts).then(quizzes => {
+        dispatch({ type: 'QUIZZES_LOADED', payload: { quizzes } });
+        setItem(cacheKey, { ...cached, quizzes });
+      }).catch(err => {
+        console.error('Quiz generation failed:', err);
+      });
+      return;
+    }
+
+    // No cache — generate everything
     if (loadingRef.current) return;
     loadingRef.current = true;
 
-    // PROGRESSIVE: Generate cards first (fast, ~500 tokens)
     try {
       const topicInfo = getTopicById(topicId);
       const topicTitle = topicInfo?.topic.title ?? topicId;
       const cards = await generateCards(name, topicTitle, template);
       dispatch({ type: 'CARDS_LOADED', payload: { cards } });
 
-      // Save partial cache (cards only)
+      // Save partial cache
       setItem(cacheKey, { cards, quizzes: [], summary: { keyPoints: [] } });
 
-      // Start generating quizzes in background
+      // Start generating quizzes in background IMMEDIATELY
       const cardTexts = cards.map(c => c.text);
       generateQuizzes(name, topicTitle, template, cardTexts).then(quizzes => {
         dispatch({ type: 'QUIZZES_LOADED', payload: { quizzes } });
-        // Update cache with quizzes
         const current = getItem<GeneratedLesson | null>(cacheKey, null);
         if (current) setItem(cacheKey, { ...current, quizzes });
-      }).catch(() => {
-        // Quiz generation failed — will retry when needed
+      }).catch(err => {
+        console.error('Quiz generation failed:', err);
       });
 
     } catch (error) {
