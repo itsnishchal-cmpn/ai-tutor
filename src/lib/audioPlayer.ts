@@ -1,14 +1,18 @@
+import { getItem } from './storage';
+
 const audioCache = new Map<string, ArrayBuffer>();
 let currentAudio: HTMLAudioElement | null = null;
 
 export async function fetchAndPlayTTS(text: string): Promise<void> {
-  const cacheKey = text.trim();
+  const voice = getItem<string>('tts_voice', 'nova');
+  const cacheKey = `${voice}:${text.trim()}`;
+
   let buffer = audioCache.get(cacheKey);
   if (!buffer) {
     const response = await fetch('/.netlify/functions/tts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({ text, voice }),
     });
     if (!response.ok) throw new Error('TTS failed');
     buffer = await response.arrayBuffer();
