@@ -9,8 +9,10 @@ export default function XPPopup({ amount, onDone }: Props) {
     return () => clearTimeout(timer);
   }, [onDone]);
   return (
-    <div className={`fixed top-1/3 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 ${visible ? 'opacity-100 scale-100' : 'opacity-0 scale-150 -translate-y-8'}`}>
-      <div className="bg-brand-600 text-white px-6 py-3 rounded-2xl shadow-lg text-xl font-bold">+{amount} XP</div>
+    <div className={`absolute top-12 left-1/2 -translate-x-1/2 z-30 pointer-events-none transition-all duration-300 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
+      <div className="bg-brand-600 text-white px-4 py-1.5 rounded-full shadow-md text-sm font-bold">
+        +{amount} XP
+      </div>
     </div>
   );
 }
