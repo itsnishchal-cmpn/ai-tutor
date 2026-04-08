@@ -16,6 +16,26 @@ interface Props {
   topicId: string;
 }
 
+// Format markdown-like text: **bold**, *italic*, newlines
+function formatText(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/\n/g, '<br/>');
+}
+
+function FormattedText({ content, className }: { content: string; className?: string }) {
+  return (
+    <div
+      className={className}
+      dangerouslySetInnerHTML={{ __html: formatText(content) }}
+    />
+  );
+}
+
 export default function DoubtOverlay({ isOpen, onClose, topicTitle, topicId: _topicId }: Props) {
   const { name } = useUser();
   const [messages, setMessages] = useState<DoubtMessage[]>([]);
@@ -77,14 +97,16 @@ export default function DoubtOverlay({ isOpen, onClose, topicTitle, topicId: _to
           )}
           {messages.map((msg, i) => (
             <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[80%] px-3 py-2 rounded-xl text-sm ${
-                msg.role === 'user' ? 'bg-brand-600 text-white' : 'bg-gray-100 text-gray-800'
-              }`}>{msg.content}</div>
+              {msg.role === 'user' ? (
+                <div className="max-w-[80%] px-3 py-2 rounded-xl text-sm bg-brand-600 text-white">{msg.content}</div>
+              ) : (
+                <FormattedText content={msg.content} className="max-w-[80%] px-3 py-2 rounded-xl text-sm bg-gray-100 text-gray-800" />
+              )}
             </div>
           ))}
           {streamingContent && (
             <div className="flex justify-start">
-              <div className="max-w-[80%] px-3 py-2 rounded-xl text-sm bg-gray-100 text-gray-800">{streamingContent}</div>
+              <FormattedText content={streamingContent} className="max-w-[80%] px-3 py-2 rounded-xl text-sm bg-gray-100 text-gray-800" />
             </div>
           )}
         </div>
