@@ -88,6 +88,39 @@ function lessonReducer(state: LessonState, action: LessonAction): LessonState {
       };
       break;
 
+    case 'CARDS_LOADED':
+      next = {
+        ...state,
+        lesson: {
+          cards: action.payload.cards,
+          quizzes: state.lesson?.quizzes ?? [],
+          summary: state.lesson?.summary ?? { keyPoints: [] },
+        },
+        isLoading: false,
+        error: null,
+      };
+      break;
+
+    case 'QUIZZES_LOADED':
+      next = {
+        ...state,
+        lesson: state.lesson ? {
+          ...state.lesson,
+          quizzes: action.payload.quizzes,
+        } : null,
+      };
+      break;
+
+    case 'SUMMARY_LOADED':
+      next = {
+        ...state,
+        lesson: state.lesson ? {
+          ...state.lesson,
+          summary: { keyPoints: action.payload.keyPoints },
+        } : null,
+      };
+      break;
+
     case 'LESSON_ERROR':
       next = {
         ...state,

@@ -5,23 +5,20 @@ import { useProgress } from '../contexts/ProgressContext';
 import { useGamification } from '../contexts/GamificationContext';
 import { getTemplate } from '../data/lessonTemplates';
 import { getTopicById, getNextTopicId } from '../data/curriculum';
-import { generateLessonContent } from '../lib/lessonApi';
+import { generateCards, generateQuizzes, generateSummary, generateLessonContent } from '../lib/lessonApi';
 import { getItem, setItem } from '../lib/storage';
 import { playSound } from '../lib/soundEffects';
 import type { GeneratedLesson } from '../types/lesson';
 
-// Tracks which cards/quizzes already earned XP to prevent double-counting on refresh
 interface TopicXPTracker {
-  cardsSeen: number[];    // card indices that already earned XP
-  quizzesDone: number[];  // quiz indices that already earned XP
+  cardsSeen: number[];
+  quizzesDone: number[];
   topicBonusAwarded: boolean;
 }
 
 function getXPTracker(topicId: string): TopicXPTracker {
   return getItem<TopicXPTracker>(`xp_tracker_${topicId}`, {
-    cardsSeen: [],
-    quizzesDone: [],
-    topicBonusAwarded: false,
+    cardsSeen: [], quizzesDone: [], topicBonusAwarded: false,
   });
 }
 
@@ -34,21 +31,18 @@ export function useLesson() {
   const { name } = useUser();
   const { markTopicStarted, markTopicCompleted, progress } = useProgress();
   const {
-    gamification,
-    addXP,
-    updateStreak,
-    recordQuizAttempt,
-    recordTopicStart,
-    recordTopicComplete,
-    checkAndAwardBadges,
+    gamification, addXP, updateStreak, recordQuizAttempt,
+    recordTopicStart, recordTopicComplete, checkAndAwardBadges,
   } = useGamification();
   const loadingRef = useRef(false);
 
-  // Track XP earned during this lesson session (for display on TopicComplete)
   const sessionXPRef = useRef(0);
   const quizCorrectRef = useRef(0);
   const quizTotalRef = useRef(0);
   const restoredRef = useRef(false);
+  // Track if quizzes/summary generation has been triggered
+  const quizGenRef = useRef(false);
+  const summaryGenRef = useRef(false);
 
   // Restore lesson state from bookmark on mount
   useEffect(() => {
@@ -61,21 +55,18 @@ export function useLesson() {
     const template = getTemplate(bookmark.topicId);
     if (!template) return;
 
-    // Restore the lesson state
     dispatch({
       type: 'RESTORE_BOOKMARK',
       payload: {
-        topicId: bookmark.topicId,
-        template,
+        topicId: bookmark.topicId, template,
         phase: bookmark.phase,
         currentCardIndex: bookmark.currentCardIndex,
         currentQuizIndex: bookmark.currentQuizIndex,
       },
     });
 
-    // Load the cached lesson content
-    const cacheKey = `lesson_${bookmark.topicId}`;
-    const cached = getItem<GeneratedLesson | null>(cacheKey, null);
+    // Load cached lesson content (full or partial)
+    const cached = getItem<GeneratedLesson | null>(`lesson_${bookmark.topicId}`, null);
     if (cached) {
       cached.cards = cached.cards.map((card, i) => ({
         ...card,
@@ -83,11 +74,11 @@ export function useLesson() {
       }));
       dispatch({ type: 'LESSON_LOADED', payload: { lesson: cached } });
     } else {
-      // No cached content — need to regenerate
+      // No cache — regenerate everything
       const topicInfo = getTopicById(bookmark.topicId);
       const topicTitle = topicInfo?.topic.title ?? bookmark.topicId;
       generateLessonContent(name, topicTitle, template).then(lesson => {
-        setItem(cacheKey, lesson);
+        setItem(`lesson_${bookmark.topicId}`, lesson);
         dispatch({ type: 'LESSON_LOADED', payload: { lesson } });
       }).catch(() => {
         dispatch({ type: 'LESSON_ERROR', payload: { error: 'Failed to restore lesson' } });
@@ -99,20 +90,21 @@ export function useLesson() {
     const template = getTemplate(topicId);
     if (!template) return;
 
-    // Reset session display counters
     sessionXPRef.current = 0;
     quizCorrectRef.current = 0;
     quizTotalRef.current = 0;
+    quizGenRef.current = false;
+    summaryGenRef.current = false;
 
     dispatch({ type: 'START_TOPIC', payload: { topicId, template } });
     markTopicStarted(topicId);
     recordTopicStart(topicId);
     updateStreak();
 
-    // Check localStorage cache first
+    // Check full cache first
     const cacheKey = `lesson_${topicId}`;
     const cached = getItem<GeneratedLesson | null>(cacheKey, null);
-    if (cached) {
+    if (cached && cached.cards?.length && cached.quizzes?.length) {
       cached.cards = cached.cards.map((card, i) => ({
         ...card,
         diagramConfig: template.cards[i]?.diagramConfig ?? card.diagramConfig,
@@ -124,12 +116,27 @@ export function useLesson() {
     if (loadingRef.current) return;
     loadingRef.current = true;
 
+    // PROGRESSIVE: Generate cards first (fast, ~500 tokens)
     try {
       const topicInfo = getTopicById(topicId);
       const topicTitle = topicInfo?.topic.title ?? topicId;
-      const lesson = await generateLessonContent(name, topicTitle, template);
-      setItem(cacheKey, lesson);
-      dispatch({ type: 'LESSON_LOADED', payload: { lesson } });
+      const cards = await generateCards(name, topicTitle, template);
+      dispatch({ type: 'CARDS_LOADED', payload: { cards } });
+
+      // Save partial cache (cards only)
+      setItem(cacheKey, { cards, quizzes: [], summary: { keyPoints: [] } });
+
+      // Start generating quizzes in background
+      const cardTexts = cards.map(c => c.text);
+      generateQuizzes(name, topicTitle, template, cardTexts).then(quizzes => {
+        dispatch({ type: 'QUIZZES_LOADED', payload: { quizzes } });
+        // Update cache with quizzes
+        const current = getItem<GeneratedLesson | null>(cacheKey, null);
+        if (current) setItem(cacheKey, { ...current, quizzes });
+      }).catch(() => {
+        // Quiz generation failed — will retry when needed
+      });
+
     } catch (error) {
       dispatch({
         type: 'LESSON_ERROR',
@@ -140,6 +147,26 @@ export function useLesson() {
     }
   }, [dispatch, name, markTopicStarted, recordTopicStart, updateStreak]);
 
+  // Trigger summary generation when quiz phase starts
+  useEffect(() => {
+    if (state.phase === 'QUIZ_CARDS' && state.topicId && state.lesson?.cards && !summaryGenRef.current) {
+      summaryGenRef.current = true;
+      const template = getTemplate(state.topicId);
+      if (!template) return;
+      const topicInfo = getTopicById(state.topicId);
+      const topicTitle = topicInfo?.topic.title ?? state.topicId;
+      const cardTexts = state.lesson.cards.map(c => c.text);
+
+      generateSummary(name, topicTitle, template, cardTexts).then(summary => {
+        dispatch({ type: 'SUMMARY_LOADED', payload: { keyPoints: summary.keyPoints } });
+        // Update cache
+        const cacheKey = `lesson_${state.topicId}`;
+        const current = getItem<GeneratedLesson | null>(cacheKey, null);
+        if (current) setItem(cacheKey, { ...current, summary: { keyPoints: summary.keyPoints } });
+      }).catch(() => {});
+    }
+  }, [state.phase, state.topicId, state.lesson?.cards, dispatch, name]);
+
   const skipVideo = useCallback(() => dispatch({ type: 'SKIP_VIDEO' }), [dispatch]);
   const finishVideo = useCallback(() => dispatch({ type: 'FINISH_VIDEO' }), [dispatch]);
   const prevCard = useCallback(() => dispatch({ type: 'PREV_CARD' }), [dispatch]);
@@ -148,8 +175,6 @@ export function useLesson() {
     if (state.topicId) {
       const cardIndex = state.currentCardIndex;
       const tracker = getXPTracker(state.topicId);
-
-      // Only award XP if this card hasn't earned XP yet
       if (!tracker.cardsSeen.includes(cardIndex)) {
         addXP(5);
         sessionXPRef.current += 5;
@@ -180,7 +205,6 @@ export function useLesson() {
         if (attempts === 1) xp = 20;
         else if (attempts === 2) xp = 10;
         else if (attempts === 3) xp = 5;
-
         if (xp > 0) addXP(xp);
         sessionXPRef.current += xp;
         recordQuizAttempt(state.topicId, attempts === 1);
@@ -189,12 +213,9 @@ export function useLesson() {
       }
       quizCorrectRef.current += 1;
       quizTotalRef.current += 1;
-
       if (gamification.soundEnabled) playSound('correct');
     } else {
       if (gamification.soundEnabled) playSound('wrong');
-
-      // If 3rd wrong attempt, record quiz as done with 0 XP
       if (state.quizAttempt.attempts + 1 >= 3 && !quizAlreadyDone) {
         quizTotalRef.current += 1;
         recordQuizAttempt(state.topicId, false);
@@ -210,25 +231,17 @@ export function useLesson() {
   const completeTopic = useCallback(() => {
     if (state.topicId) {
       const tracker = getXPTracker(state.topicId);
-
       markTopicCompleted(state.topicId);
       recordTopicComplete(state.topicId);
-
-      // +50 XP topic completion bonus (only once)
       if (!tracker.topicBonusAwarded) {
         addXP(50);
         sessionXPRef.current += 50;
         tracker.topicBonusAwarded = true;
         saveXPTracker(state.topicId, tracker);
       }
-
-      // Check for new badges
       const completedTopicIds = Object.keys(progress).filter(id => progress[id]?.completed);
-      if (!completedTopicIds.includes(state.topicId)) {
-        completedTopicIds.push(state.topicId);
-      }
+      if (!completedTopicIds.includes(state.topicId)) completedTopicIds.push(state.topicId);
       checkAndAwardBadges(completedTopicIds);
-
       if (gamification.soundEnabled) playSound('topicComplete');
     }
     dispatch({ type: 'COMPLETE_TOPIC' });
@@ -239,23 +252,15 @@ export function useLesson() {
   const nextTopicId = state.topicId ? getNextTopicId(state.topicId) : null;
   const nextTopicTitle = nextTopicId ? getTopicById(nextTopicId)?.topic.title ?? null : null;
 
+  // Check if quizzes are ready (for quiz transition screen)
+  const quizzesReady = (state.lesson?.quizzes.length ?? 0) > 0;
+
   return {
-    state,
-    startTopic,
-    skipVideo,
-    finishVideo,
-    prevCard,
-    nextCard,
-    startQuiz,
-    submitQuizAnswer,
-    retryQuiz,
-    nextQuiz,
-    completeTopic,
-    resetLesson,
-    nextTopicId,
-    nextTopicTitle,
-    sessionXPRef,
-    quizCorrectRef,
-    quizTotalRef,
+    state, startTopic, skipVideo, finishVideo, prevCard, nextCard,
+    startQuiz, submitQuizAnswer, retryQuiz, nextQuiz,
+    completeTopic, resetLesson,
+    nextTopicId, nextTopicTitle,
+    sessionXPRef, quizCorrectRef, quizTotalRef,
+    quizzesReady,
   };
 }

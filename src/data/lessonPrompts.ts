@@ -15,10 +15,8 @@ REAL-LIFE EXAMPLES: Stop sign (octagon), honeycomb (hexagon), rangoli patterns, 
   'angle-sum-property': `NCERT FACTS:
 - Sum of interior angles of any polygon = (n-2) × 180° where n = number of sides
 - This works because any polygon can be divided into (n-2) triangles, each with 180°
-- Triangle: (3-2)×180° = 180°
-- Quadrilateral: (4-2)×180° = 360°
-- Pentagon: (5-2)×180° = 540°
-- Hexagon: (6-2)×180° = 720°
+- Triangle: (3-2)×180° = 180°, Quadrilateral: (4-2)×180° = 360°
+- Pentagon: (5-2)×180° = 540°, Hexagon: (6-2)×180° = 720°
 - Sum of exterior angles of ANY convex polygon = 360° (always!)
 - For a regular polygon: each exterior angle = 360°/n, each interior angle = (n-2)×180°/n
 REAL-LIFE EXAMPLES: Why tiles fit together (angles must add to 360°), clock face angles`,
@@ -46,7 +44,7 @@ REAL-LIFE EXAMPLES: A tilted door, a leaning bookshelf, a slanted window frame`,
 - Diagonals bisect each other at 90° (perpendicular bisectors)
 - Diagonals bisect the vertex angles (cut the corner angles in half)
 - NOTE: A rhombus does NOT have 90° angles (unless it's a square)
-REAL-LIFE EXAMPLES: Diamond shape on playing cards, kite shape during Makar Sankranti, rangoli diamond patterns`,
+REAL-LIFE EXAMPLES: Diamond shape on playing cards, kite shape during Makar Sankranti`,
 
   'rectangle': `NCERT FACTS:
 - A rectangle is a parallelogram with ALL angles equal to 90°
@@ -54,73 +52,66 @@ REAL-LIFE EXAMPLES: Diamond shape on playing cards, kite shape during Makar Sank
 - All angles are right angles (90°)
 - Diagonals are EQUAL in length (AC = BD)
 - Diagonals bisect each other (but NOT at 90°, unless it's a square)
-- NOTE: Opposite sides are equal but not all four sides equal (unless it's a square)
 REAL-LIFE EXAMPLES: Door, book, phone screen, TV screen, classroom blackboard`,
 
   'square': `NCERT FACTS:
 - A square is BOTH a rectangle AND a rhombus
 - All four sides are equal AND all four angles are 90°
-- It has ALL properties of rectangle + ALL properties of rhombus:
-- Diagonals are equal (from rectangle)
-- Diagonals bisect at 90° (from rhombus)
-- Diagonals bisect vertex angles (each corner split into 45°+45°)
+- Diagonals are equal (from rectangle), bisect at 90° (from rhombus), bisect vertex angles (45°+45°)
 - A square is the most "special" quadrilateral — it satisfies every property
 REAL-LIFE EXAMPLES: Carrom board, chessboard squares, floor tiles, window panes`,
 
   'kite': `NCERT FACTS:
 - A kite has two pairs of CONSECUTIVE (adjacent) equal sides, NOT opposite sides
-- A kite is NOT a parallelogram (opposite sides are NOT parallel or equal)
+- A kite is NOT a parallelogram
 - One pair of opposite angles are equal (the angles between the unequal sides)
 - The longer diagonal bisects the shorter diagonal at 90°
-- The longer diagonal also bisects the vertex angles it connects
 - Only ONE diagonal is bisected, not both
-REAL-LIFE EXAMPLES: Patang (kite) that you fly during Makar Sankranti, arrowhead shape`,
+REAL-LIFE EXAMPLES: Patang (kite) that you fly during Makar Sankranti`,
 
   'trapezium': `NCERT FACTS:
 - A trapezium has exactly ONE pair of parallel sides (called bases)
 - The non-parallel sides are called legs
 - An isosceles trapezium has equal legs, equal base angles, and equal diagonals
-- A trapezium is NOT a parallelogram (only one pair of parallel sides, not two)
-- The parallel sides are usually drawn as top and bottom (one shorter, one longer)
-REAL-LIFE EXAMPLES: A bucket viewed from the side, a table lamp shade, a bridge support`,
+- A trapezium is NOT a parallelogram
+REAL-LIFE EXAMPLES: A bucket viewed from the side, a table lamp shade`,
 
   'diagonal-properties': `NCERT FACTS:
-- Parallelogram: diagonals bisect each other (but not equal, not perpendicular)
-- Rhombus: diagonals bisect each other at 90° (perpendicular bisectors)
-- Rectangle: diagonals are equal and bisect each other (but NOT at 90°)
-- Square: diagonals are equal, bisect each other at 90°, and bisect vertex angles (ALL properties)
-- Kite: only ONE diagonal is bisected by the other, and they cross at 90°
-- Trapezium: diagonals are NOT equal (unless isosceles trapezium)
-KEY INSIGHT: As you go from parallelogram → rhombus/rectangle → square, more diagonal properties are added`,
+- Parallelogram: diagonals bisect each other (not equal, not perpendicular)
+- Rhombus: diagonals bisect each other at 90°
+- Rectangle: diagonals are equal and bisect each other (not at 90°)
+- Square: diagonals are equal, bisect at 90°, bisect vertex angles
+- Kite: only ONE diagonal is bisected, and they cross at 90°
+KEY INSIGHT: More special the quadrilateral → more diagonal properties`,
 
   'quadrilateral-family': `NCERT FACTS:
 - Family tree: Quadrilateral → Parallelogram → Rectangle → Square
 - Also: Quadrilateral → Parallelogram → Rhombus → Square
-- A square IS a rectangle (special case with all sides equal)
-- A square IS a rhombus (special case with all angles 90°)
-- A rectangle IS a parallelogram (special case with 90° angles)
-- A rhombus IS a parallelogram (special case with all sides equal)
-- A kite and trapezium are NOT parallelograms
+- A square IS a rectangle AND a rhombus
+- A rectangle IS a parallelogram, a rhombus IS a parallelogram
+- Kite and trapezium are NOT parallelograms
 - Every square is a rectangle, but not every rectangle is a square
-KEY INSIGHT: Square is the most special — it belongs to EVERY category except kite and trapezium`,
+KEY INSIGHT: Square is the most special — it belongs to every category`,
 };
 
-// Specific hook examples per topic to avoid hallucination
 const hookExamples: Record<string, string> = {
-  'polygons-basics': 'Use examples like: stop signs (octagon), rangoli patterns, honeycomb (hexagon), tiles on the floor',
-  'angle-sum-property': 'Use examples like: why do tiles fit perfectly on a floor? Because angles around a point = 360°',
-  'quadrilateral-basics': 'Use examples like: your phone screen, a book, a door — these are all quadrilaterals with angles adding to 360°',
-  'parallelogram': 'Use examples like: a door that is slightly tilted/leaning, or a slanted window frame',
-  'rhombus': 'Use examples like: diamond shape on playing cards, or the shape of a kite (patang) during Makar Sankranti',
-  'rectangle': 'Use examples like: a door, a book, your phone screen — rectangles are everywhere',
-  'square': 'Use examples like: a carrom board, a chessboard, or square tiles on the floor',
-  'kite': 'Use examples like: a patang (kite) that you fly during Makar Sankranti',
-  'trapezium': 'Use examples like: a bucket viewed from the side, or a table lamp shade',
-  'diagonal-properties': 'Use examples like: compare what happens when you draw an X inside different shapes',
-  'quadrilateral-family': 'Use examples like: think of a family tree — square is the "child" that inherited everything from both parents (rectangle + rhombus)',
+  'polygons-basics': 'Use: stop signs (octagon), rangoli patterns, honeycomb (hexagon)',
+  'angle-sum-property': 'Use: why do tiles fit on a floor? angles around a point = 360°',
+  'quadrilateral-basics': 'Use: phone screen, a book, a door — quadrilaterals with angles adding to 360°',
+  'parallelogram': 'Use: a door slightly tilted/leaning, or a slanted window frame',
+  'rhombus': 'Use: diamond on playing cards, patang during Makar Sankranti',
+  'rectangle': 'Use: a door, a book, phone screen — rectangles everywhere',
+  'square': 'Use: carrom board, chessboard, square floor tiles',
+  'kite': 'Use: patang that you fly during Makar Sankranti',
+  'trapezium': 'Use: bucket from the side, table lamp shade',
+  'diagonal-properties': 'Use: draw an X inside different shapes and compare',
+  'quadrilateral-family': 'Use: family tree — square inherited everything from rectangle + rhombus',
 };
 
-export function buildLessonGenerationPrompt(
+// ============================================================
+// CALL 1: Generate concept cards only (fast, ~500 tokens)
+// ============================================================
+export function buildCardsPrompt(
   studentName: string,
   topicTitle: string,
   template: LessonTemplate
@@ -128,85 +119,148 @@ export function buildLessonGenerationPrompt(
   const content = topicContent[template.topicId] ?? '';
   const hookHint = hookExamples[template.topicId] ?? '';
 
-  const cardDescriptions = template.cards.map((c, i) => {
-    let instruction = `- Card ${i + 1} (${c.type}, id: "${c.id}"): Sub-concept: "${c.subConcept}"`;
+  const cardInstructions = template.cards.map((c, i) => {
+    let inst = `Card ${i + 1} (id: "${c.id}", type: ${c.type}): "${c.subConcept}"`;
     if (c.type === 'hook') {
-      instruction += `\n  INSTRUCTION: Write a warm, relatable real-life hook. ${hookHint}. Do NOT teach math yet — just make the student curious.`;
-    } else if (c.type === 'concept') {
-      instruction += `\n  INSTRUCTION: Teach this ONE specific sub-concept using ONLY the NCERT facts below. Be precise and factual. 1-2 sentences max.`;
-    } else if (c.type === 'formula') {
-      instruction += `\n  INSTRUCTION: Present the formula clearly with a one-line explanation. Use the NCERT facts below.`;
+      inst += `\n  → Write a warm, relatable hook using ONLY these examples: ${hookHint}. Do NOT teach math yet.`;
+    } else {
+      inst += `\n  → Teach this ONE fact from the NCERT content below. 1-2 sentences max. Be precise.`;
     }
-    return instruction;
+    return inst;
   }).join('\n');
 
-  const quizDescriptions = template.quizzes.map((q, i) => {
-    return `- Quiz ${i + 1} (id: "${q.id}"): Test sub-concept "${q.subConcept}"
-  INSTRUCTION: The correct answer MUST be factually correct per NCERT. Wrong options must be plausible but clearly wrong. Hints guide thinking, never reveal the answer.`;
-  }).join('\n');
+  const system = `You generate concept card text for PadhAI, an AI math tutor for Indian Class 8 students.
 
-  const system = `You are PadhAI's lesson content generator for NCERT Class 8 Mathematics, Chapter 3: Understanding Quadrilaterals.
-
-CRITICAL RULES:
-- All text MUST be in Hinglish (natural Hindi + English mix, how Indian students talk)
-- Each card text: EXACTLY 1-2 sentences. No more.
-- Use ONLY the NCERT facts provided below. Do NOT make up facts or examples that contradict the content.
+RULES:
+- ALL text in Hinglish (natural Hindi + English mix)
+- Each card: 1-2 sentences MAXIMUM. Short and clear.
 - Address the student as "${studentName}"
-- Be warm and friendly, like a caring didi/bhaiya
-- For hook cards: use ONLY the suggested real-life examples. Do NOT invent random examples.
-- For concept cards: state the mathematical fact clearly. Be precise.
-- For quizzes: correct answer MUST be mathematically correct per NCERT
-- Each quiz: exactly 4 options, exactly 2 progressive hints, 1 explanation
-- Return ONLY valid JSON. No markdown, no code fences, no extra text.
+- Use ONLY the NCERT facts provided. Never invent facts.
+- Hook cards: real-life analogy only, no math teaching
+- Concept cards: one precise mathematical fact per card
+- Return ONLY valid JSON array. No markdown, no code fences.
 
 ${content}`;
 
-  const user = `Generate lesson content for student "${studentName}" on topic "${topicTitle}".
+  const user = `Generate ${template.cards.length} concept cards for "${topicTitle}":
 
-Cards to generate:
-${cardDescriptions}
+${cardInstructions}
 
-Quizzes to generate:
-${quizDescriptions}
-
-Summary: ${template.summary.keyPointCount} key points (from NCERT facts only)
-
-Return EXACTLY this JSON structure:
-{
-  "cards": [
-    { "id": "card-id-from-template", "type": "hook|concept|formula|example", "text": "Hinglish text (1-2 sentences ONLY)" }
-  ],
-  "quizzes": [
-    {
-      "id": "quiz-id-from-template",
-      "question": "Question in Hinglish?",
-      "options": ["Option A", "Option B", "Option C", "Option D"],
-      "correctAnswer": "B",
-      "hints": ["Hint 1 — guide thinking", "Hint 2 — more specific guide"],
-      "explanation": "Why this answer is correct (Hinglish, 1 sentence)"
-    }
-  ],
-  "summary": {
-    "keyPoints": ["Key point 1", "Key point 2", ...]
-  }
-}`;
+Return JSON array:
+[
+  { "id": "card-id", "type": "hook|concept|formula|example", "text": "Hinglish text (1-2 sentences)" }
+]`;
 
   return { system, user };
 }
 
+// ============================================================
+// CALL 2: Generate quizzes (uses actual card text as context)
+// ============================================================
+export function buildQuizzesPrompt(
+  studentName: string,
+  topicTitle: string,
+  template: LessonTemplate,
+  cardTexts: string[] // actual generated card texts for context
+): { system: string; user: string } {
+  const content = topicContent[template.topicId] ?? '';
+
+  const whatWasTaught = cardTexts.map((t, i) => `Card ${i + 1}: ${t}`).join('\n');
+
+  const quizInstructions = template.quizzes.map((q, i) => {
+    const difficulties = ['easy', 'medium', 'hard'];
+    const diff = difficulties[i % 3]; // rotate easy → medium → hard
+    return `Quiz ${i + 1} (id: "${q.id}", difficulty: ${diff}): Test "${q.subConcept}"`;
+  }).join('\n');
+
+  const system = `You generate quiz questions for PadhAI. The student "${studentName}" just learned these concepts through cards. Create quizzes that test their understanding.
+
+RULES:
+- ALL text in Hinglish
+- Each quiz: exactly 4 options (A, B, C, D), correct answer must be factually correct per NCERT
+- Difficulty levels:
+  - EASY: Direct recall of a fact taught in the cards. Student just needs to remember.
+  - MEDIUM: Apply the concept. Requires thinking one step beyond what was directly stated.
+  - HARD: Combine concepts or identify tricky edge cases. Tests deeper understanding.
+- 3 HINTS per question (progressive, like a real tutor):
+  - Hint 1: Gentle nudge — remind them of the relevant concept area without being specific
+  - Hint 2: More specific — point them toward the key property or rule
+  - Hint 3: Almost there — rephrase the question in simpler terms or eliminate wrong thinking
+  - NEVER reveal the answer in any hint. Guide the student to THINK.
+- Return ONLY valid JSON array.
+
+${content}`;
+
+  const user = `The student just learned these cards about "${topicTitle}":
+
+${whatWasTaught}
+
+Generate these quizzes:
+${quizInstructions}
+
+Return JSON array:
+[
+  {
+    "id": "quiz-id",
+    "question": "Question in Hinglish?",
+    "options": ["Option A", "Option B", "Option C", "Option D"],
+    "correctAnswer": "B",
+    "difficulty": "easy|medium|hard",
+    "hints": ["Hint 1 (gentle nudge)", "Hint 2 (more specific)", "Hint 3 (almost there)"],
+    "explanation": "Why this is correct (1 sentence, Hinglish)"
+  }
+]`;
+
+  return { system, user };
+}
+
+// ============================================================
+// CALL 3: Generate summary (uses card texts, tiny call)
+// ============================================================
+export function buildSummaryPrompt(
+  studentName: string,
+  topicTitle: string,
+  template: LessonTemplate,
+  cardTexts: string[]
+): { system: string; user: string } {
+  const system = `You create lesson summaries for PadhAI. Summarize what the student learned in a warm, encouraging way.
+
+RULES:
+- ALL text in Hinglish
+- Key points should be clear, concise mathematical facts
+- Return ONLY valid JSON. No markdown.`;
+
+  const whatWasTaught = cardTexts.map((t, i) => `Card ${i + 1}: ${t}`).join('\n');
+
+  const user = `Student "${studentName}" completed "${topicTitle}". Here's what was taught:
+
+${whatWasTaught}
+
+Generate a summary with exactly ${template.summary.keyPointCount} key points. Each key point = one important mathematical fact they should remember.
+
+Return JSON:
+{ "keyPoints": ["Point 1", "Point 2", ...], "encouragement": "A warm 1-sentence encouragement in Hinglish" }`;
+
+  return { system, user };
+}
+
+// ============================================================
+// Doubt chat + Vision prompts (unchanged)
+// ============================================================
 export function buildDoubtChatPrompt(studentName: string, topicTitle: string): string {
-  const content = topicContent[topicTitle.toLowerCase().replace(/\s+&\s+/g, '-').replace(/\s+/g, '-')] ?? '';
+  const key = topicTitle.toLowerCase().replace(/\s+&\s+/g, '-').replace(/\s+/g, '-');
+  const content = topicContent[key] ?? '';
 
   return `You are PadhAI, a warm and patient AI math tutor for Indian students. The student "${studentName}" is asking a doubt about "${topicTitle}".
 
 RULES:
 - Respond in Hinglish (natural Hindi-English mix)
 - Keep answers SHORT — 2-3 sentences max
-- For math problems: GUIDE, never give direct answers. Ask the student to think step by step.
+- For math problems: GUIDE, never give direct answers
 - Be warm and encouraging
-- Use emojis sparingly: ✨ 🎯 💡 ✅
+- Use emojis sparingly
 
-NCERT Class 8, Chapter 3: Understanding Quadrilaterals content is your domain.
+NCERT Class 8, Chapter 3: Understanding Quadrilaterals.
 ${content}`;
 }
 
@@ -214,15 +268,17 @@ export function buildVisionPrompt(studentName: string, topicTitle: string): stri
   return `You are PadhAI, a warm AI math tutor. Student "${studentName}" is studying "${topicTitle}" and has uploaded an image.
 
 RULES:
-- Respond in Hinglish (natural Hindi-English mix)
+- Respond in Hinglish
+- TEXTBOOK PAGE: explain in simple Hinglish, break into digestible points
+- MATH PROBLEM: DO NOT solve directly. Guide step-by-step. Let student arrive at answer.
+- UNCLEAR IMAGE: politely ask for a clearer photo`;
+}
 
-When analyzing the image:
-- If it's a TEXTBOOK PAGE or DIAGRAM: explain what's shown in simple Hinglish, break into digestible points, relate to current topic
-- If it's a MATH PROBLEM (printed or handwritten): DO NOT solve it directly. Guide step-by-step:
-  1. Ask them to identify what's given
-  2. Ask which formula/concept applies
-  3. Guide them through each step
-  4. Let them arrive at the answer
-  Only reveal the answer if they're stuck after 3+ attempts
-- If the IMAGE IS UNCLEAR: politely ask for a clearer photo`;
+// Keep backward compat for any code still using this
+export function buildLessonGenerationPrompt(
+  studentName: string,
+  topicTitle: string,
+  template: LessonTemplate
+): { system: string; user: string } {
+  return buildCardsPrompt(studentName, topicTitle, template);
 }

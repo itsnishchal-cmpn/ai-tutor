@@ -40,7 +40,8 @@ export interface GeneratedQuiz {
   question: string;
   options: string[];
   correctAnswer: string;
-  hints: string[];
+  difficulty: 'easy' | 'medium' | 'hard';
+  hints: [string, string, string]; // exactly 3 progressive hints
   explanation: string;
 }
 
@@ -83,6 +84,9 @@ export type LessonAction =
   | { type: 'START_TOPIC'; payload: { topicId: string; template: LessonTemplate } }
   | { type: 'RESTORE_BOOKMARK'; payload: { topicId: string; template: LessonTemplate; phase: LessonPhase; currentCardIndex: number; currentQuizIndex: number } }
   | { type: 'LESSON_LOADED'; payload: { lesson: GeneratedLesson } }
+  | { type: 'CARDS_LOADED'; payload: { cards: GeneratedCard[] } }
+  | { type: 'QUIZZES_LOADED'; payload: { quizzes: GeneratedQuiz[] } }
+  | { type: 'SUMMARY_LOADED'; payload: { keyPoints: string[] } }
   | { type: 'LESSON_ERROR'; payload: { error: string } }
   | { type: 'SKIP_VIDEO' }
   | { type: 'FINISH_VIDEO' }

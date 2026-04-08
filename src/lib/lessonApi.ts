@@ -1,13 +1,8 @@
-import type { LessonTemplate, GeneratedLesson } from '../types/lesson';
-import { buildLessonGenerationPrompt } from '../data/lessonPrompts';
+import type { LessonTemplate, GeneratedCard, GeneratedQuiz, GeneratedLesson } from '../types/lesson';
+import { buildCardsPrompt, buildQuizzesPrompt, buildSummaryPrompt } from '../data/lessonPrompts';
 
-export async function generateLessonContent(
-  studentName: string,
-  topicTitle: string,
-  template: LessonTemplate
-): Promise<GeneratedLesson> {
-  const { system, user } = buildLessonGenerationPrompt(studentName, topicTitle, template);
-
+// Shared SSE reader for all calls
+async function callChatAPI(system: string, user: string): Promise<string> {
   const response = await fetch('/.netlify/functions/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -17,9 +12,7 @@ export async function generateLessonContent(
     }),
   });
 
-  if (!response.ok) {
-    throw new Error(`Lesson generation failed: ${response.status}`);
-  }
+  if (!response.ok) throw new Error(`API call failed: ${response.status}`);
 
   const reader = response.body?.getReader();
   if (!reader) throw new Error('No response stream');
@@ -42,32 +35,81 @@ export async function generateLessonContent(
         if (data === '[DONE]') break;
         try {
           const parsed = JSON.parse(data);
-          if (parsed.type === 'content') {
-            fullText += parsed.text;
-          } else if (parsed.type === 'error') {
-            throw new Error(parsed.message);
-          }
+          if (parsed.type === 'content') fullText += parsed.text;
+          else if (parsed.type === 'error') throw new Error(parsed.message);
         } catch (e) {
-          if (e instanceof Error && e.message.startsWith('Lesson generation') ||
-              (e instanceof Error && !e.message.includes('JSON'))) throw e;
+          if (e instanceof Error && !e.message.includes('JSON input')) throw e;
         }
       }
     }
   }
 
-  // Strip markdown code fences if AI wraps the JSON
-  let jsonText = fullText.trim();
-  if (jsonText.startsWith('```')) {
-    jsonText = jsonText.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
+  // Strip markdown code fences
+  let text = fullText.trim();
+  if (text.startsWith('```')) {
+    text = text.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
   }
+  return text;
+}
 
-  const lesson: GeneratedLesson = JSON.parse(jsonText);
+// CALL 1: Generate concept cards (~500 tokens, fast)
+export async function generateCards(
+  studentName: string,
+  topicTitle: string,
+  template: LessonTemplate
+): Promise<GeneratedCard[]> {
+  const { system, user } = buildCardsPrompt(studentName, topicTitle, template);
+  const json = await callChatAPI(system, user);
+  const cards: GeneratedCard[] = JSON.parse(json);
 
-  // Merge diagramConfig from template into generated cards
-  lesson.cards = lesson.cards.map((card, i) => ({
+  return cards.map((card, i) => ({
     ...card,
     diagramConfig: template.cards[i]?.diagramConfig ?? card.diagramConfig,
   }));
+}
 
-  return lesson;
+// CALL 2: Generate quizzes (~800 tokens, uses card text as context)
+export async function generateQuizzes(
+  studentName: string,
+  topicTitle: string,
+  template: LessonTemplate,
+  cardTexts: string[]
+): Promise<GeneratedQuiz[]> {
+  const { system, user } = buildQuizzesPrompt(studentName, topicTitle, template, cardTexts);
+  const json = await callChatAPI(system, user);
+  const quizzes: GeneratedQuiz[] = JSON.parse(json);
+
+  return quizzes.map(q => ({
+    ...q,
+    hints: [
+      q.hints[0] ?? 'Socho, kya property yaad aa rahi hai?',
+      q.hints[1] ?? 'Dhyan se socho — concept cards mein kya padha tha?',
+      q.hints[2] ?? 'Ek aur try — galat options eliminate karo.',
+    ] as [string, string, string],
+  }));
+}
+
+// CALL 3: Generate summary (~200 tokens, tiny and fast)
+export async function generateSummary(
+  studentName: string,
+  topicTitle: string,
+  template: LessonTemplate,
+  cardTexts: string[]
+): Promise<{ keyPoints: string[]; encouragement: string }> {
+  const { system, user } = buildSummaryPrompt(studentName, topicTitle, template, cardTexts);
+  const json = await callChatAPI(system, user);
+  return JSON.parse(json);
+}
+
+// Legacy compat for old cached lessons
+export async function generateLessonContent(
+  studentName: string,
+  topicTitle: string,
+  template: LessonTemplate
+): Promise<GeneratedLesson> {
+  const cards = await generateCards(studentName, topicTitle, template);
+  const cardTexts = cards.map(c => c.text);
+  const quizzes = await generateQuizzes(studentName, topicTitle, template, cardTexts);
+  const { keyPoints } = await generateSummary(studentName, topicTitle, template, cardTexts);
+  return { cards, quizzes, summary: { keyPoints } };
 }

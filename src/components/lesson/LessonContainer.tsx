@@ -26,6 +26,7 @@ export default function LessonContainer() {
     completeTopic,
     nextTopicId, nextTopicTitle,
     sessionXPRef, quizCorrectRef, quizTotalRef,
+    quizzesReady,
   } = useLesson();
 
   const { voiceEnabled, toggleVoice, speak, stop, isPlaying } = useVoice();
@@ -162,7 +163,7 @@ export default function LessonContainer() {
       )}
 
       {state.phase === 'QUIZ_TRANSITION' && (
-        <QuizTransition onStart={startQuiz} />
+        <QuizTransition onStart={startQuiz} quizzesReady={quizzesReady} />
       )}
 
       {state.phase === 'QUIZ_CARDS' && (
