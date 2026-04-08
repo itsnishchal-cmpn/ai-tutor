@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CurriculumSidebar from './CurriculumSidebar';
 import ProgressPanel from './ProgressPanel';
@@ -9,6 +9,7 @@ import { useLesson } from '../../hooks/useLesson';
 import { getTemplate } from '../../data/lessonTemplates';
 import { useUser } from '../../contexts/UserContext';
 import { useProgress } from '../../contexts/ProgressContext';
+import { useGamification } from '../../contexts/GamificationContext';
 import { getNextTopicId, getTopicById } from '../../data/curriculum';
 import {
   Menu,
@@ -26,7 +27,13 @@ export default function AppLayout() {
   const isLessonMode = lessonState.topicId !== null;
   const { clearUser } = useUser();
   const { markTopicCompleted } = useProgress();
+  const { updateStreak } = useGamification();
   const navigate = useNavigate();
+
+  // Start/maintain streak when the app is opened
+  useEffect(() => {
+    updateStreak();
+  }, [updateStreak]);
 
   const handleLogout = () => {
     clearUser();

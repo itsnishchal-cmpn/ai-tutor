@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useLesson } from '../../hooks/useLesson';
 import { getTopicById } from '../../data/curriculum';
 import { MessageCircle } from 'lucide-react';
@@ -14,7 +14,9 @@ export default function LessonContainer() {
   const {
     state, skipVideo, finishVideo, nextCard, startQuiz,
     submitQuizAnswer, retryQuiz, nextQuiz, startTopic,
+    completeTopic,
     nextTopicId, nextTopicTitle,
+    sessionXPRef, quizCorrectRef, quizTotalRef,
   } = useLesson();
 
   const [doubtOpen, setDoubtOpen] = useState(false);
@@ -23,6 +25,17 @@ export default function LessonContainer() {
     () => state.topicId ? getTopicById(state.topicId)?.topic.title ?? '' : '',
     [state.topicId]
   );
+
+  // When last quiz is done, auto-complete the topic
+  const handleNextQuiz = useCallback(() => {
+    const totalQuizzes = state.lesson?.quizzes.length ?? 0;
+    const isLastQuiz = state.currentQuizIndex + 1 >= totalQuizzes;
+    if (isLastQuiz) {
+      completeTopic();
+    } else {
+      nextQuiz();
+    }
+  }, [state.lesson, state.currentQuizIndex, completeTopic, nextQuiz]);
 
   if (!state.topicId) {
     return (
@@ -47,8 +60,7 @@ export default function LessonContainer() {
     );
   }
 
-  // Show Video Intro immediately — it doesn't need lesson content (just the template videoId)
-  // Only show loading spinner if student tries to proceed before content is ready
+  // Show Video Intro immediately — it doesn't need lesson content
   if (state.phase === 'TOPIC_INTRO' && state.template) {
     return (
       <div className="h-full relative">
@@ -58,7 +70,7 @@ export default function LessonContainer() {
     );
   }
 
-  // For all other phases, we need lesson content — show loading if not ready
+  // For all other phases, we need lesson content
   if (state.isLoading || !state.lesson) {
     return <LessonLoading topicTitle={topicTitle} />;
   }
@@ -66,7 +78,7 @@ export default function LessonContainer() {
   return (
     <div className="h-full relative">
 
-      {state.phase === 'CONCEPT_CARDS' && state.lesson && (
+      {state.phase === 'CONCEPT_CARDS' && (
         <CardFlow cards={state.lesson.cards} currentIndex={state.currentCardIndex} onNext={nextCard} />
       )}
 
@@ -74,7 +86,7 @@ export default function LessonContainer() {
         <QuizTransition onStart={startQuiz} />
       )}
 
-      {state.phase === 'QUIZ_CARDS' && state.lesson && (
+      {state.phase === 'QUIZ_CARDS' && (
         <QuizCard
           quiz={state.lesson.quizzes[state.currentQuizIndex]}
           attemptState={state.quizAttempt}
@@ -82,23 +94,23 @@ export default function LessonContainer() {
           totalQuizzes={state.lesson.quizzes.length}
           onSelectAnswer={submitQuizAnswer}
           onRetry={retryQuiz}
-          onNext={nextQuiz}
+          onNext={handleNextQuiz}
         />
       )}
 
-      {state.phase === 'TOPIC_COMPLETE' && state.lesson && (
+      {state.phase === 'TOPIC_COMPLETE' && (
         <TopicComplete
           topicTitle={topicTitle}
           lesson={state.lesson}
-          totalXP={0}
-          quizScore={{ correct: 0, total: state.lesson.quizzes.length }}
+          totalXP={sessionXPRef.current}
+          quizScore={{ correct: quizCorrectRef.current, total: quizTotalRef.current }}
           onNextTopic={() => nextTopicId && startTopic(nextTopicId)}
           nextTopicTitle={nextTopicTitle}
           onOpenDoubt={() => setDoubtOpen(true)}
         />
       )}
 
-      {['CONCEPT_CARDS', 'QUIZ_CARDS', 'VIDEO_PLAYING'].includes(state.phase) && (
+      {['CONCEPT_CARDS', 'QUIZ_CARDS'].includes(state.phase) && (
         <button onClick={() => setDoubtOpen(true)}
           className="fixed bottom-6 right-6 w-12 h-12 bg-brand-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-brand-700 transition-colors z-40"
           title="Ask a doubt">
