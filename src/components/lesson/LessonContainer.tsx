@@ -52,7 +52,7 @@ export default function LessonContainer() {
   if (state.phase === 'TOPIC_INTRO' && state.template) {
     return (
       <div className="h-full relative">
-        <VideoIntro topicTitle={topicTitle} videoId={state.template.videoId} onSkip={skipVideo} onFinish={finishVideo} onOpenDoubt={() => setDoubtOpen(true)} />
+        <VideoIntro topicTitle={topicTitle} videoId={state.template.videoId} onSkip={skipVideo} onFinish={finishVideo} onOpenDoubt={() => setDoubtOpen(true)} doubtOpen={doubtOpen} />
         <DoubtOverlay isOpen={doubtOpen} onClose={() => setDoubtOpen(false)} topicTitle={topicTitle} topicId={state.topicId} />
       </div>
     );

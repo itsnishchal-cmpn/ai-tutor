@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Play, SkipForward, MessageCircle } from 'lucide-react';
 
 interface Props {
@@ -7,23 +7,39 @@ interface Props {
   onSkip: () => void;
   onFinish: () => void;
   onOpenDoubt: () => void;
+  doubtOpen: boolean;
 }
 
-export default function VideoIntro({ topicTitle, videoId, onSkip, onFinish, onOpenDoubt }: Props) {
+export default function VideoIntro({ topicTitle, videoId, onSkip, onFinish, onOpenDoubt, doubtOpen }: Props) {
   const [playing, setPlaying] = useState(false);
-  const [paused, setPaused] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
+  // Post a command to the YouTube iframe player API
+  const postYTCommand = useCallback((command: string) => {
+    try {
+      iframeRef.current?.contentWindow?.postMessage(
+        JSON.stringify({ event: 'command', func: command, args: [] }),
+        '*'
+      );
+    } catch {
+      // Cross-origin — best effort
+    }
+  }, []);
+
   const handleAskDoubt = () => {
-    // We can't programmatically pause a YouTube iframe via postMessage reliably,
-    // but we can overlay a "paused" state and tell the user
-    setPaused(true);
+    postYTCommand('pauseVideo');
     onOpenDoubt();
   };
 
-  const handleResumeVideo = () => {
-    setPaused(false);
-  };
+  // When doubt overlay closes, resume video
+  // This is handled by the parent passing doubtOpen prop
+  // We use an effect-like check: if doubtOpen just became false and we were playing
+  const prevDoubtOpenRef = useRef(doubtOpen);
+  if (prevDoubtOpenRef.current && !doubtOpen && playing) {
+    // Doubt overlay just closed — resume video
+    postYTCommand('playVideo');
+  }
+  prevDoubtOpenRef.current = doubtOpen;
 
   return (
     <div className="h-full flex flex-col items-center justify-center px-6">
@@ -33,28 +49,14 @@ export default function VideoIntro({ topicTitle, videoId, onSkip, onFinish, onOp
 
         <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden mb-4">
           {playing ? (
-            <>
-              <iframe
-                ref={iframeRef}
-                src={`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&enablejsapi=1`}
-                title={topicTitle}
-                className="w-full h-full"
-                allow="autoplay; encrypted-media"
-                allowFullScreen
-              />
-              {/* Paused overlay */}
-              {paused && (
-                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                  <button
-                    onClick={handleResumeVideo}
-                    className="px-6 py-3 bg-white text-gray-800 rounded-xl font-medium hover:bg-gray-100 transition-colors shadow-lg"
-                  >
-                    <Play size={18} className="inline mr-2" />
-                    Resume Video
-                  </button>
-                </div>
-              )}
-            </>
+            <iframe
+              ref={iframeRef}
+              src={`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&enablejsapi=1`}
+              title={topicTitle}
+              className="w-full h-full"
+              allow="autoplay; encrypted-media"
+              allowFullScreen
+            />
           ) : (
             <button onClick={() => setPlaying(true)} className="w-full h-full flex flex-col items-center justify-center relative">
               <img src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`} alt={topicTitle} className="absolute inset-0 w-full h-full object-cover" />
@@ -68,7 +70,7 @@ export default function VideoIntro({ topicTitle, videoId, onSkip, onFinish, onOp
         </div>
 
         {/* Have a doubt button — visible when video is playing */}
-        {playing && !paused && (
+        {playing && (
           <button
             onClick={handleAskDoubt}
             className="w-full flex items-center justify-center gap-2 px-4 py-2.5 mb-4 bg-amber-50 text-amber-700 border border-amber-200 rounded-xl hover:bg-amber-100 transition-colors text-sm font-medium"
