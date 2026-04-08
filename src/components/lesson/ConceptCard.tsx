@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import type { GeneratedCard } from '../../types/lesson';
 import DiagramRenderer from '../rich/DiagramRenderer';
 import { ArrowRight } from 'lucide-react';
@@ -7,9 +8,17 @@ interface Props {
   onNext: () => void;
   cardNumber: number;
   totalCards: number;
+  onSpeak?: (text: string) => void;
 }
 
-export default function ConceptCard({ card, onNext, cardNumber, totalCards }: Props) {
+export default function ConceptCard({ card, onNext, cardNumber, totalCards, onSpeak }: Props) {
+  // Auto-speak card text when card appears
+  useEffect(() => {
+    if (onSpeak && card.text) {
+      onSpeak(card.text);
+    }
+  }, [card.text, onSpeak]);
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex justify-center gap-1.5 py-3">

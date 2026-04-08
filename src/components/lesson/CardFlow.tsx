@@ -6,9 +6,10 @@ interface Props {
   cards: GeneratedCard[];
   currentIndex: number;
   onNext: () => void;
+  onSpeak?: (text: string) => void;
 }
 
-export default function CardFlow({ cards, currentIndex, onNext }: Props) {
+export default function CardFlow({ cards, currentIndex, onNext, onSpeak }: Props) {
   const [animating, setAnimating] = useState(false);
   const [displayIndex, setDisplayIndex] = useState(currentIndex);
 
@@ -28,7 +29,7 @@ export default function CardFlow({ cards, currentIndex, onNext }: Props) {
 
   return (
     <div className={`h-full transition-opacity duration-200 ${animating ? 'opacity-0' : 'opacity-100'}`}>
-      <ConceptCard card={card} onNext={onNext} cardNumber={displayIndex} totalCards={cards.length} />
+      <ConceptCard card={card} onNext={onNext} cardNumber={displayIndex} totalCards={cards.length} onSpeak={onSpeak} />
     </div>
   );
 }

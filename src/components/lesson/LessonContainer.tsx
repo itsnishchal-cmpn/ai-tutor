@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useLesson } from '../../hooks/useLesson';
+import { useVoice } from '../../hooks/useVoice';
 import { getTopicById } from '../../data/curriculum';
 import { MessageCircle } from 'lucide-react';
 import VideoIntro from './VideoIntro';
@@ -9,6 +10,7 @@ import QuizCard from './QuizCard';
 import TopicComplete from './TopicComplete';
 import LessonLoading from './LessonLoading';
 import DoubtOverlay from './DoubtOverlay';
+import VoiceToggle from '../voice/VoiceToggle';
 
 export default function LessonContainer() {
   const {
@@ -19,6 +21,7 @@ export default function LessonContainer() {
     sessionXPRef, quizCorrectRef, quizTotalRef,
   } = useLesson();
 
+  const { voiceEnabled, toggleVoice, speak, stop, isPlaying } = useVoice();
   const [doubtOpen, setDoubtOpen] = useState(false);
 
   const topicTitle = useMemo(
@@ -36,6 +39,12 @@ export default function LessonContainer() {
       nextQuiz();
     }
   }, [state.lesson, state.currentQuizIndex, completeTopic, nextQuiz]);
+
+  // Stop TTS when advancing cards or changing phases
+  const handleNextCard = useCallback(() => {
+    stop();
+    nextCard();
+  }, [stop, nextCard]);
 
   if (!state.topicId) {
     return (
@@ -78,8 +87,20 @@ export default function LessonContainer() {
   return (
     <div className="h-full relative">
 
+      {/* Voice toggle — visible during cards */}
       {state.phase === 'CONCEPT_CARDS' && (
-        <CardFlow cards={state.lesson.cards} currentIndex={state.currentCardIndex} onNext={nextCard} />
+        <div className="absolute top-2 right-2 z-10">
+          <VoiceToggle enabled={voiceEnabled} isPlaying={isPlaying} onToggle={toggleVoice} />
+        </div>
+      )}
+
+      {state.phase === 'CONCEPT_CARDS' && (
+        <CardFlow
+          cards={state.lesson.cards}
+          currentIndex={state.currentCardIndex}
+          onNext={handleNextCard}
+          onSpeak={voiceEnabled ? speak : undefined}
+        />
       )}
 
       {state.phase === 'QUIZ_TRANSITION' && (
