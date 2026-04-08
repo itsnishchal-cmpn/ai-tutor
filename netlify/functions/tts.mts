@@ -15,7 +15,7 @@ export default async function handler(req: Request, _context: Context) {
 
     const response = await openai.audio.speech.create({
       model: 'tts-1',
-      voice: voice ?? 'shimmer',
+      voice: voice ?? 'nova',
       input: text,
       response_format: 'mp3',
     });

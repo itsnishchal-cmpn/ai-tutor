@@ -10,6 +10,25 @@ import { getItem, setItem } from '../lib/storage';
 import { playSound } from '../lib/soundEffects';
 import type { GeneratedLesson } from '../types/lesson';
 
+// Tracks which cards/quizzes already earned XP to prevent double-counting on refresh
+interface TopicXPTracker {
+  cardsSeen: number[];    // card indices that already earned XP
+  quizzesDone: number[];  // quiz indices that already earned XP
+  topicBonusAwarded: boolean;
+}
+
+function getXPTracker(topicId: string): TopicXPTracker {
+  return getItem<TopicXPTracker>(`xp_tracker_${topicId}`, {
+    cardsSeen: [],
+    quizzesDone: [],
+    topicBonusAwarded: false,
+  });
+}
+
+function saveXPTracker(topicId: string, tracker: TopicXPTracker) {
+  setItem(`xp_tracker_${topicId}`, tracker);
+}
+
 export function useLesson() {
   const { state, dispatch } = useLessonContext();
   const { name } = useUser();
@@ -25,7 +44,7 @@ export function useLesson() {
   } = useGamification();
   const loadingRef = useRef(false);
 
-  // Track XP earned during this lesson session
+  // Track XP earned during this lesson session (for display on TopicComplete)
   const sessionXPRef = useRef(0);
   const quizCorrectRef = useRef(0);
   const quizTotalRef = useRef(0);
@@ -34,7 +53,7 @@ export function useLesson() {
     const template = getTemplate(topicId);
     if (!template) return;
 
-    // Reset session tracking
+    // Reset session display counters
     sessionXPRef.current = 0;
     quizCorrectRef.current = 0;
     quizTotalRef.current = 0;
@@ -79,11 +98,21 @@ export function useLesson() {
   const finishVideo = useCallback(() => dispatch({ type: 'FINISH_VIDEO' }), [dispatch]);
 
   const nextCard = useCallback(() => {
-    addXP(5); // +5 XP per concept card
-    sessionXPRef.current += 5;
+    if (state.topicId) {
+      const cardIndex = state.currentCardIndex;
+      const tracker = getXPTracker(state.topicId);
+
+      // Only award XP if this card hasn't earned XP yet
+      if (!tracker.cardsSeen.includes(cardIndex)) {
+        addXP(5);
+        sessionXPRef.current += 5;
+        tracker.cardsSeen.push(cardIndex);
+        saveXPTracker(state.topicId, tracker);
+      }
+    }
     if (gamification.soundEnabled) playSound('tap');
     dispatch({ type: 'NEXT_CARD' });
-  }, [dispatch, addXP, gamification.soundEnabled]);
+  }, [dispatch, addXP, gamification.soundEnabled, state.topicId, state.currentCardIndex]);
 
   const startQuiz = useCallback(() => dispatch({ type: 'START_QUIZ' }), [dispatch]);
 
@@ -94,27 +123,36 @@ export function useLesson() {
     const isCorrect = selectedOption === quiz.correctAnswer;
     dispatch({ type: 'SUBMIT_QUIZ_ANSWER', payload: { selectedOption, isCorrect } });
 
-    if (isCorrect) {
-      const attempts = state.quizAttempt.attempts + 1;
-      let xp = 0;
-      if (attempts === 1) xp = 20;
-      else if (attempts === 2) xp = 10;
-      else if (attempts === 3) xp = 5;
+    const tracker = getXPTracker(state.topicId);
+    const quizAlreadyDone = tracker.quizzesDone.includes(state.currentQuizIndex);
 
-      if (xp > 0) addXP(xp);
-      sessionXPRef.current += xp;
+    if (isCorrect) {
+      if (!quizAlreadyDone) {
+        const attempts = state.quizAttempt.attempts + 1;
+        let xp = 0;
+        if (attempts === 1) xp = 20;
+        else if (attempts === 2) xp = 10;
+        else if (attempts === 3) xp = 5;
+
+        if (xp > 0) addXP(xp);
+        sessionXPRef.current += xp;
+        recordQuizAttempt(state.topicId, attempts === 1);
+        tracker.quizzesDone.push(state.currentQuizIndex);
+        saveXPTracker(state.topicId, tracker);
+      }
       quizCorrectRef.current += 1;
       quizTotalRef.current += 1;
-      recordQuizAttempt(state.topicId, attempts === 1);
 
       if (gamification.soundEnabled) playSound('correct');
     } else {
       if (gamification.soundEnabled) playSound('wrong');
 
-      // If this was the 3rd wrong attempt, record it
-      if (state.quizAttempt.attempts + 1 >= 3) {
+      // If 3rd wrong attempt, record quiz as done with 0 XP
+      if (state.quizAttempt.attempts + 1 >= 3 && !quizAlreadyDone) {
         quizTotalRef.current += 1;
         recordQuizAttempt(state.topicId, false);
+        tracker.quizzesDone.push(state.currentQuizIndex);
+        saveXPTracker(state.topicId, tracker);
       }
     }
   }, [dispatch, state.lesson, state.currentQuizIndex, state.quizAttempt.attempts, state.topicId, addXP, recordQuizAttempt, gamification.soundEnabled]);
@@ -124,12 +162,18 @@ export function useLesson() {
 
   const completeTopic = useCallback(() => {
     if (state.topicId) {
+      const tracker = getXPTracker(state.topicId);
+
       markTopicCompleted(state.topicId);
       recordTopicComplete(state.topicId);
 
-      // +50 XP topic completion bonus
-      addXP(50);
-      sessionXPRef.current += 50;
+      // +50 XP topic completion bonus (only once)
+      if (!tracker.topicBonusAwarded) {
+        addXP(50);
+        sessionXPRef.current += 50;
+        tracker.topicBonusAwarded = true;
+        saveXPTracker(state.topicId, tracker);
+      }
 
       // Check for new badges
       const completedTopicIds = Object.keys(progress).filter(id => progress[id]?.completed);
