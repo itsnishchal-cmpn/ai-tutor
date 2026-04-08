@@ -15,9 +15,16 @@ function parseQuizBlock(raw: string, quizType: 'mcq' | 'type-in'): QuizBlock | n
 
   let options: string[] | undefined;
   if (quizType === 'mcq') {
-    const optionMatches = raw.match(/^[A-D]\)\s*.+$/gm);
-    if (optionMatches) {
-      options = optionMatches.map(o => o.replace(/^[A-D]\)\s*/, '').trim());
+    const optionMatches = raw.match(/^[A-F]\)\s*.+$/gm);
+    if (!optionMatches || optionMatches.length < 2) {
+      return null;
+    }
+    options = optionMatches.map(o => o.replace(/^[A-F]\)\s*/, '').trim());
+
+    const answerIndex = correctAnswer.charCodeAt(0) - 65;
+    if (answerIndex < 0 || answerIndex >= options.length) {
+      console.warn(`Quiz answer "${correctAnswer}" doesn't match options (${options.length} options)`);
+      return null;
     }
   }
 
