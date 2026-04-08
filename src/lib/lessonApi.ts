@@ -2,16 +2,30 @@ import type { LessonTemplate, GeneratedCard, GeneratedQuiz, GeneratedLesson } fr
 import { buildCardsPrompt, buildQuizzesPrompt, buildSummaryPrompt } from '../data/lessonPrompts';
 
 // Shared SSE reader for all calls
-async function callChatAPI(system: string, user: string): Promise<string> {
-  const response = await fetch('/.netlify/functions/chat', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      messages: [{ role: 'user', content: user }],
-      systemPrompt: system,
-    }),
-  });
+async function callChatAPI(system: string, user: string, timeoutMs = 30000): Promise<string> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
 
+  let response: Response;
+  try {
+    response = await fetch('/.netlify/functions/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: user }],
+        systemPrompt: system,
+      }),
+      signal: controller.signal,
+    });
+  } catch (err) {
+    clearTimeout(timer);
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new Error('Request timed out — please try again');
+    }
+    throw err;
+  }
+
+  clearTimeout(timer);
   if (!response.ok) throw new Error(`API call failed: ${response.status}`);
 
   const reader = response.body?.getReader();

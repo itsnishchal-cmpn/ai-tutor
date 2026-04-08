@@ -21,6 +21,7 @@ const initialState: LessonState = {
   quizAttempt: initialQuizAttempt,
   isLoading: false,
   error: null,
+  quizError: null,
 };
 
 // Lightweight bookmark saved to localStorage
@@ -126,6 +127,20 @@ function lessonReducer(state: LessonState, action: LessonAction): LessonState {
         ...state,
         isLoading: false,
         error: action.payload.error,
+      };
+      break;
+
+    case 'QUIZ_ERROR':
+      next = {
+        ...state,
+        quizError: action.payload.error,
+      };
+      break;
+
+    case 'RETRY_QUIZZES':
+      next = {
+        ...state,
+        quizError: null,
       };
       break;
 

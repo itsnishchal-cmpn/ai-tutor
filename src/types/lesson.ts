@@ -78,6 +78,7 @@ export interface LessonState {
   quizAttempt: QuizAttemptState;
   isLoading: boolean;
   error: string | null;
+  quizError: string | null;
 }
 
 export type LessonAction =
@@ -88,6 +89,8 @@ export type LessonAction =
   | { type: 'QUIZZES_LOADED'; payload: { quizzes: GeneratedQuiz[] } }
   | { type: 'SUMMARY_LOADED'; payload: { keyPoints: string[] } }
   | { type: 'LESSON_ERROR'; payload: { error: string } }
+  | { type: 'QUIZ_ERROR'; payload: { error: string } }
+  | { type: 'RETRY_QUIZZES' }
   | { type: 'SKIP_VIDEO' }
   | { type: 'FINISH_VIDEO' }
   | { type: 'NEXT_CARD' }

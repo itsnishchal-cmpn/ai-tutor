@@ -139,6 +139,7 @@ export function useLesson() {
         setItem(cacheKey, { ...cached, quizzes });
       }).catch(err => {
         console.error('Quiz generation failed:', err);
+        dispatch({ type: 'QUIZ_ERROR', payload: { error: err instanceof Error ? err.message : 'Quiz generation failed' } });
       });
       return;
     }
@@ -164,6 +165,7 @@ export function useLesson() {
         if (current) setItem(cacheKey, { ...current, quizzes });
       }).catch(err => {
         console.error('Quiz generation failed:', err);
+        dispatch({ type: 'QUIZ_ERROR', payload: { error: err instanceof Error ? err.message : 'Quiz generation failed' } });
       });
 
     } catch (error) {
@@ -276,6 +278,27 @@ export function useLesson() {
     dispatch({ type: 'COMPLETE_TOPIC' });
   }, [dispatch, state.topicId, markTopicCompleted, recordTopicComplete, addXP, progress, checkAndAwardBadges, gamification.soundEnabled]);
 
+  const retryQuizGeneration = useCallback(() => {
+    if (!state.topicId || !state.lesson?.cards?.length) return;
+    dispatch({ type: 'RETRY_QUIZZES' });
+
+    const template = getTemplate(state.topicId);
+    if (!template) return;
+    const topicInfo = getTopicById(state.topicId);
+    const topicTitle = topicInfo?.topic.title ?? state.topicId;
+    const cardTexts = state.lesson.cards.map(c => c.text);
+    const cacheKey = `lesson_${state.topicId}`;
+
+    generateQuizzes(name, topicTitle, template, cardTexts).then(quizzes => {
+      dispatch({ type: 'QUIZZES_LOADED', payload: { quizzes } });
+      const current = getItem<GeneratedLesson | null>(cacheKey, null);
+      if (current) setItem(cacheKey, { ...current, quizzes });
+    }).catch(err => {
+      console.error('Quiz generation retry failed:', err);
+      dispatch({ type: 'QUIZ_ERROR', payload: { error: err instanceof Error ? err.message : 'Quiz generation failed' } });
+    });
+  }, [dispatch, state.topicId, state.lesson?.cards, name]);
+
   const resetLesson = useCallback(() => dispatch({ type: 'RESET_LESSON' }), [dispatch]);
 
   const nextTopicId = state.topicId ? getNextTopicId(state.topicId) : null;
@@ -287,9 +310,10 @@ export function useLesson() {
   return {
     state, startTopic, skipVideo, finishVideo, prevCard, nextCard,
     startQuiz, submitQuizAnswer, retryQuiz, nextQuiz,
-    completeTopic, resetLesson,
+    completeTopic, resetLesson, retryQuizGeneration,
     nextTopicId, nextTopicTitle,
     sessionXPRef, quizCorrectRef, quizTotalRef,
     quizzesReady,
+    quizError: state.quizError,
   };
 }

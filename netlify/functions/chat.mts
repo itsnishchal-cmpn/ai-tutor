@@ -28,11 +28,9 @@ export default async function handler(req: Request, _context: Context) {
       return new Response('Bad request: messages and systemPrompt required', { status: 400 });
     }
 
-    const maxTokens = messages.length === 1 && systemPrompt.includes('lesson content generator') ? 2048 : 1024;
-
     const stream = anthropic.messages.stream({
       model: 'claude-sonnet-4-20250514',
-      max_tokens: maxTokens,
+      max_tokens: 8192,
       system: systemPrompt,
       messages: messages.map((m: { role: string; content: string }) => ({
         role: m.role as 'user' | 'assistant',

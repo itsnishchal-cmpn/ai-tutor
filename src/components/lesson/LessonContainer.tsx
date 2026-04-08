@@ -5,7 +5,6 @@ import { useGamification } from '../../contexts/GamificationContext';
 import { getLevelForXP } from '../../data/levelDefinitions';
 import { badges as badgeDefs } from '../../data/badgeDefinitions';
 import { getTopicById } from '../../data/curriculum';
-import { MessageCircle } from 'lucide-react';
 import VideoIntro from './VideoIntro';
 import CardFlow from './CardFlow';
 import QuizTransition from './QuizTransition';
@@ -23,10 +22,10 @@ export default function LessonContainer() {
   const {
     state, skipVideo, finishVideo, prevCard, nextCard, startQuiz,
     submitQuizAnswer, retryQuiz, nextQuiz, startTopic,
-    completeTopic,
+    completeTopic, retryQuizGeneration,
     nextTopicId, nextTopicTitle,
     sessionXPRef, quizCorrectRef, quizTotalRef,
-    quizzesReady,
+    quizzesReady, quizError,
   } = useLesson();
 
   const { voiceEnabled, toggleVoice, speak, stop, isPlaying } = useVoice();
@@ -159,11 +158,12 @@ export default function LessonContainer() {
           onNext={handleNextCard}
           onBack={handlePrevCard}
           onSpeak={voiceEnabled ? speak : undefined}
+          onOpenDoubt={() => setDoubtOpen(true)}
         />
       )}
 
       {state.phase === 'QUIZ_TRANSITION' && (
-        <QuizTransition onStart={startQuiz} quizzesReady={quizzesReady} />
+        <QuizTransition onStart={startQuiz} quizzesReady={quizzesReady} quizError={quizError} onRetry={retryQuizGeneration} />
       )}
 
       {state.phase === 'QUIZ_CARDS' && (
@@ -190,15 +190,6 @@ export default function LessonContainer() {
         />
       )}
 
-      {['CONCEPT_CARDS', 'QUIZ_CARDS'].includes(state.phase) && (
-        <button
-          onClick={() => setDoubtOpen(true)}
-          className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-center gap-2 py-3 bg-amber-50 border-t border-amber-200 text-amber-700 hover:bg-amber-100 transition-colors"
-        >
-          <MessageCircle size={18} />
-          <span className="text-sm font-medium">Have a doubt? Ask AI</span>
-        </button>
-      )}
 
       <DoubtOverlay isOpen={doubtOpen} onClose={() => setDoubtOpen(false)} topicTitle={topicTitle} topicId={state.topicId} />
 

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type { GeneratedCard } from '../../types/lesson';
 import DiagramRenderer from '../rich/DiagramRenderer';
-import { ArrowRight, ArrowLeft } from 'lucide-react';
+import { ArrowRight, ArrowLeft, MessageCircle } from 'lucide-react';
 
 interface Props {
   card: GeneratedCard;
@@ -10,9 +10,10 @@ interface Props {
   cardNumber: number;
   totalCards: number;
   onSpeak?: (text: string) => void;
+  onOpenDoubt?: () => void;
 }
 
-export default function ConceptCard({ card, onNext, onBack, cardNumber, totalCards, onSpeak }: Props) {
+export default function ConceptCard({ card, onNext, onBack, cardNumber, totalCards, onSpeak, onOpenDoubt }: Props) {
   const lastSpokenRef = useRef('');
 
   useEffect(() => {
@@ -45,21 +46,32 @@ export default function ConceptCard({ card, onNext, onBack, cardNumber, totalCar
         )}
         <p className="text-lg text-gray-800 text-center leading-relaxed mb-8">{card.text}</p>
       </div>
-      <div className="p-4 pb-14 flex justify-center gap-3">
-        {!isFirstCard && (
+      <div className="p-4 pb-4 flex flex-col items-center gap-3">
+        <div className="flex justify-center gap-3">
+          {!isFirstCard && (
+            <button
+              onClick={onBack}
+              className="flex items-center gap-2 px-6 py-3 bg-gray-100 text-gray-600 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+            >
+              <ArrowLeft size={18} /> Back
+            </button>
+          )}
           <button
-            onClick={onBack}
-            className="flex items-center gap-2 px-6 py-3 bg-gray-100 text-gray-600 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+            onClick={onNext}
+            className="flex items-center gap-2 px-8 py-3 bg-brand-600 text-white rounded-xl font-medium hover:bg-brand-700 transition-colors shadow-sm"
           >
-            <ArrowLeft size={18} /> Back
+            Next <ArrowRight size={18} />
+          </button>
+        </div>
+        {onOpenDoubt && (
+          <button
+            onClick={onOpenDoubt}
+            className="flex items-center gap-1.5 text-sm text-amber-700 hover:text-amber-800 transition-colors"
+          >
+            <MessageCircle size={15} />
+            Have a doubt? Ask AI
           </button>
         )}
-        <button
-          onClick={onNext}
-          className="flex items-center gap-2 px-8 py-3 bg-brand-600 text-white rounded-xl font-medium hover:bg-brand-700 transition-colors shadow-sm"
-        >
-          Next <ArrowRight size={18} />
-        </button>
       </div>
     </div>
   );
