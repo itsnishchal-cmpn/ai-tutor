@@ -70,10 +70,10 @@ export default function DoubtOverlay({ isOpen, onClose, topicTitle }: Props) {
       e.preventDefault();
       e.stopPropagation();
       spaceHeld = false;
-      if (inputState === 'recording') {
-        const text = await stopRecording();
-        if (text) setInput(text);
-      }
+      // Don't check inputState here — it's a stale closure.
+      // spaceHeld flag already confirms we started recording.
+      const text = await stopRecording();
+      if (text) setInput(text);
     };
 
     window.addEventListener('keydown', handleKeyDown, true);
