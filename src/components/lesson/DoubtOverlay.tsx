@@ -212,11 +212,11 @@ export default function DoubtOverlay({ isOpen, onClose, topicTitle }: Props) {
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div className="relative w-full sm:max-w-md h-[70vh] sm:h-[500px] bg-white rounded-t-2xl sm:rounded-2xl flex flex-col shadow-xl">
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-          <h3 className="font-semibold text-gray-800">Ask PadhAI</h3>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg">
-            <X size={20} className="text-gray-500" />
+        {/* Header — gradient */}
+        <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-indigo-500 to-violet-500 rounded-t-2xl sm:rounded-t-2xl">
+          <h3 className="font-bold text-white">Ask PadhAI</h3>
+          <button onClick={onClose} className="p-1 hover:bg-white/20 rounded-lg transition-colors">
+            <X size={20} className="text-white" />
           </button>
         </div>
 
@@ -235,16 +235,16 @@ export default function DoubtOverlay({ isOpen, onClose, topicTitle }: Props) {
                   {msg.imagePreview && (
                     <img src={msg.imagePreview} alt="Uploaded" className="rounded-xl mb-1 max-h-48 object-cover" />
                   )}
-                  <div className="px-3 py-2 rounded-xl text-sm bg-brand-600 text-white">{msg.content}</div>
+                  <div className="px-3 py-2 rounded-2xl text-sm bg-indigo-500 text-white shadow-sm">{msg.content}</div>
                 </div>
               ) : (
-                <FormattedText content={msg.content} className="max-w-[80%] px-3 py-2 rounded-xl text-sm bg-gray-100 text-gray-800" />
+                <FormattedText content={msg.content} className="max-w-[80%] px-3 py-2 rounded-2xl text-sm bg-white text-[#3C3C3C] shadow-sm border border-[#EBEBEB]" />
               )}
             </div>
           ))}
           {streamingContent && (
             <div className="flex justify-start">
-              <FormattedText content={streamingContent} className="max-w-[80%] px-3 py-2 rounded-xl text-sm bg-gray-100 text-gray-800" />
+              <FormattedText content={streamingContent} className="max-w-[80%] px-3 py-2 rounded-2xl text-sm bg-white text-[#3C3C3C] shadow-sm border border-[#EBEBEB]" />
             </div>
           )}
         </div>
@@ -330,7 +330,7 @@ export default function DoubtOverlay({ isOpen, onClose, topicTitle }: Props) {
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleSend()}
                 placeholder={pendingImage ? 'Add a message...' : 'Type your doubt...'}
-                className="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400"
+                className="flex-1 px-3 py-2 border border-[#E5E5E5] rounded-full text-sm focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200"
                 disabled={isStreaming}
               />
 
@@ -347,7 +347,7 @@ export default function DoubtOverlay({ isOpen, onClose, topicTitle }: Props) {
               <button
                 onClick={handleSend}
                 disabled={(!input.trim() && !pendingImage) || isStreaming}
-                className="p-2 bg-brand-600 text-white rounded-xl hover:bg-brand-700 disabled:opacity-50 transition-colors"
+                className="p-2 bg-indigo-500 text-white rounded-full hover:bg-indigo-600 disabled:opacity-50 transition-colors btn-press"
               >
                 {isStreaming ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
               </button>

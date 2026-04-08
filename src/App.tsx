@@ -5,7 +5,7 @@ import { ProgressProvider } from './contexts/ProgressContext';
 import { GamificationProvider } from './contexts/GamificationContext';
 import { LessonProvider } from './contexts/LessonContext';
 import LandingPage from './components/landing/LandingPage';
-import AppLayout from './components/layout/AppLayout';
+import AppShell from './components/layout/AppShell';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { name } = useUser();
@@ -25,7 +25,7 @@ function AppRoutes() {
               <ProgressProvider>
                 <GamificationProvider>
                   <LessonProvider>
-                    <AppLayout />
+                    <AppShell />
                   </LessonProvider>
                 </GamificationProvider>
               </ProgressProvider>

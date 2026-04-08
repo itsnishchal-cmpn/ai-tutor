@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { GeneratedCard } from '../../types/lesson';
 import ConceptCard from './ConceptCard';
 
@@ -12,25 +12,46 @@ interface Props {
 }
 
 export default function CardFlow({ cards, currentIndex, onNext, onBack, onSpeak, onOpenDoubt }: Props) {
-  const [animating, setAnimating] = useState(false);
   const [displayIndex, setDisplayIndex] = useState(currentIndex);
+  const [direction, setDirection] = useState<'forward' | 'backward'>('forward');
+  const [phase, setPhase] = useState<'idle' | 'exit' | 'enter'>('idle');
+  const prevIndexRef = useRef(currentIndex);
 
   useEffect(() => {
-    if (currentIndex !== displayIndex) {
-      setAnimating(true);
-      const timer = setTimeout(() => {
-        setDisplayIndex(currentIndex);
-        setAnimating(false);
-      }, 200);
-      return () => clearTimeout(timer);
-    }
+    if (currentIndex === displayIndex) return;
+
+    const goingForward = currentIndex > prevIndexRef.current;
+    setDirection(goingForward ? 'forward' : 'backward');
+    prevIndexRef.current = currentIndex;
+
+    // Exit phase
+    setPhase('exit');
+    const exitTimer = setTimeout(() => {
+      setDisplayIndex(currentIndex);
+      setPhase('enter');
+      const enterTimer = setTimeout(() => setPhase('idle'), 300);
+      return () => clearTimeout(enterTimer);
+    }, 200);
+
+    return () => clearTimeout(exitTimer);
   }, [currentIndex, displayIndex]);
 
   const card = cards[displayIndex];
   if (!card) return null;
 
+  const animClass =
+    phase === 'exit'
+      ? direction === 'forward'
+        ? 'animate-slide-out-left'
+        : 'animate-slide-out-right'
+      : phase === 'enter'
+        ? direction === 'forward'
+          ? 'animate-slide-in-right'
+          : 'animate-slide-in-left'
+        : '';
+
   return (
-    <div className={`h-full transition-opacity duration-200 ${animating ? 'opacity-0' : 'opacity-100'}`}>
+    <div className={`h-full ${animClass}`}>
       <ConceptCard
         card={card}
         onNext={onNext}
