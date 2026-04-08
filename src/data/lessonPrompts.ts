@@ -100,44 +100,43 @@ export function buildQuizzesPrompt(
   const ncert = getNCERTContent(template.topicId);
   const whatWasTaught = cardTexts.map((t, i) => `Card ${i + 1}: ${t}`).join('\n');
 
-  const quizInstructions = template.quizzes.map((q, i) => {
-    const difficulties = ['easy', 'medium', 'hard'];
-    const diff = difficulties[i % 3];
-    return `Quiz ${i + 1} (id: "${q.id}", difficulty: ${diff}): Test "${q.subConcept}"`;
-  }).join('\n');
-
   const system = `You generate quiz questions for PadhAI. The student "${studentName}" just learned through concept cards. Create quizzes testing their understanding.
 ${HINGLISH_RULES}
 QUIZ RULES:
+- Generate between 3 to 8 quiz questions based on how much content was taught.
+  - If 6 cards were taught: 3-4 quizzes
+  - If 8-10 cards were taught: 5-8 quizzes
+  - Must have AT LEAST one of each difficulty: easy, medium, hard
 - Each quiz: exactly 4 options (A, B, C, D). Correct answer must match NCERT facts.
 - Difficulty levels:
   - EASY: Direct recall. Student remembers a fact from the cards.
   - MEDIUM: Apply the concept one step further than what was stated.
   - HARD: Combine concepts, spot tricky edge cases, deeper understanding.
+- Order: start with easy, then medium, then hard. Mix if more than 3.
 - 3 HINTS per question (like a real tutor guiding step by step):
   - Hint 1 (gentle nudge): Remind them which concept area to think about.
   - Hint 2 (more specific): Point toward the key property or rule.
   - Hint 3 (almost there): Rephrase simpler or help eliminate wrong options.
   - NEVER reveal the answer in any hint. Make the student THINK.
+- Assign each quiz a unique id: "quiz-1", "quiz-2", etc.
 - Return ONLY a valid JSON array.
 
 NCERT TEXTBOOK CONTENT:
 ${ncert}`;
 
-  const user = `The student learned these cards about "${topicTitle}":
+  const user = `The student learned these ${cardTexts.length} cards about "${topicTitle}":
 ${whatWasTaught}
 
-Generate quizzes:
-${quizInstructions}
+Generate quizzes covering the key concepts taught above. Decide the right number (3-8) based on how much content there is.
 
 Return JSON array:
 [{
-  "id": "quiz-id",
+  "id": "quiz-1",
   "question": "Question in Hinglish (Roman script)?",
   "options": ["Option A", "Option B", "Option C", "Option D"],
   "correctAnswer": "B",
   "difficulty": "easy|medium|hard",
-  "hints": ["Hint 1", "Hint 2", "Hint 3"],
+  "hints": ["Hint 1 (gentle nudge)", "Hint 2 (more specific)", "Hint 3 (almost there)"],
   "explanation": "Why correct (1 sentence, Hinglish Roman script)"
 }]`;
 

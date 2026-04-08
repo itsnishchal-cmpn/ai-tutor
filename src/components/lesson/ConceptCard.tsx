@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import type { GeneratedCard } from '../../types/lesson';
 import DiagramRenderer from '../rich/DiagramRenderer';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
@@ -13,8 +13,12 @@ interface Props {
 }
 
 export default function ConceptCard({ card, onNext, onBack, cardNumber, totalCards, onSpeak }: Props) {
+  const lastSpokenRef = useRef('');
+
   useEffect(() => {
-    if (onSpeak && card.text) {
+    // Only speak if card text changed (prevents double-speak on re-renders)
+    if (onSpeak && card.text && card.text !== lastSpokenRef.current) {
+      lastSpokenRef.current = card.text;
       onSpeak(card.text);
     }
   }, [card.text, onSpeak]);
