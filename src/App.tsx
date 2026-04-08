@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { UserProvider, useUser } from './contexts/UserContext';
 import { ChatProvider } from './contexts/ChatContext';
 import { ProgressProvider } from './contexts/ProgressContext';
+import { LessonProvider } from './contexts/LessonContext';
 import LandingPage from './components/landing/LandingPage';
 import AppLayout from './components/layout/AppLayout';
 
@@ -21,7 +22,9 @@ function AppRoutes() {
           <ProtectedRoute>
             <ChatProvider>
               <ProgressProvider>
-                <AppLayout />
+                <LessonProvider>
+                  <AppLayout />
+                </LessonProvider>
               </ProgressProvider>
             </ChatProvider>
           </ProtectedRoute>
