@@ -35,10 +35,6 @@ export default function LessonContainer() {
     );
   }
 
-  if (state.isLoading || !state.lesson) {
-    return <LessonLoading topicTitle={topicTitle} />;
-  }
-
   if (state.error) {
     return (
       <div className="h-full flex flex-col items-center justify-center px-6">
@@ -51,11 +47,24 @@ export default function LessonContainer() {
     );
   }
 
+  // Show Video Intro immediately — it doesn't need lesson content (just the template videoId)
+  // Only show loading spinner if student tries to proceed before content is ready
+  if (state.phase === 'TOPIC_INTRO' && state.template) {
+    return (
+      <div className="h-full relative">
+        <VideoIntro topicTitle={topicTitle} videoId={state.template.videoId} onSkip={skipVideo} onFinish={finishVideo} />
+        <DoubtOverlay isOpen={doubtOpen} onClose={() => setDoubtOpen(false)} topicTitle={topicTitle} topicId={state.topicId} />
+      </div>
+    );
+  }
+
+  // For all other phases, we need lesson content — show loading if not ready
+  if (state.isLoading || !state.lesson) {
+    return <LessonLoading topicTitle={topicTitle} />;
+  }
+
   return (
     <div className="h-full relative">
-      {state.phase === 'TOPIC_INTRO' && state.template && (
-        <VideoIntro topicTitle={topicTitle} videoId={state.template.videoId} onSkip={skipVideo} onFinish={finishVideo} />
-      )}
 
       {state.phase === 'CONCEPT_CARDS' && state.lesson && (
         <CardFlow cards={state.lesson.cards} currentIndex={state.currentCardIndex} onNext={nextCard} />

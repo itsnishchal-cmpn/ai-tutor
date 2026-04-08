@@ -5,6 +5,8 @@ import { useProgress } from '../contexts/ProgressContext';
 import { getTemplate } from '../data/lessonTemplates';
 import { getTopicById, getNextTopicId } from '../data/curriculum';
 import { generateLessonContent } from '../lib/lessonApi';
+import { getItem, setItem } from '../lib/storage';
+import type { GeneratedLesson } from '../types/lesson';
 
 export function useLesson() {
   const { state, dispatch } = useLessonContext();
@@ -19,6 +21,19 @@ export function useLesson() {
     dispatch({ type: 'START_TOPIC', payload: { topicId, template } });
     markTopicStarted(topicId);
 
+    // Check localStorage cache first
+    const cacheKey = `lesson_${topicId}`;
+    const cached = getItem<GeneratedLesson | null>(cacheKey, null);
+    if (cached) {
+      // Merge diagramConfig from template into cached cards
+      cached.cards = cached.cards.map((card, i) => ({
+        ...card,
+        diagramConfig: template.cards[i]?.diagramConfig ?? card.diagramConfig,
+      }));
+      dispatch({ type: 'LESSON_LOADED', payload: { lesson: cached } });
+      return;
+    }
+
     if (loadingRef.current) return;
     loadingRef.current = true;
 
@@ -26,6 +41,8 @@ export function useLesson() {
       const topicInfo = getTopicById(topicId);
       const topicTitle = topicInfo?.topic.title ?? topicId;
       const lesson = await generateLessonContent(name, topicTitle, template);
+      // Cache in localStorage for instant loads next time
+      setItem(cacheKey, lesson);
       dispatch({ type: 'LESSON_LOADED', payload: { lesson } });
     } catch (error) {
       dispatch({
