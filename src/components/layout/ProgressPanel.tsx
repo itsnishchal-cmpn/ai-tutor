@@ -1,15 +1,23 @@
 import { useState } from 'react';
 import { useProgress } from '../../contexts/ProgressContext';
 import { useUser } from '../../contexts/UserContext';
+import { useGamification } from '../../contexts/GamificationContext';
 import { getAllTopicIds } from '../../data/curriculum';
-import { Trophy, Target, CheckCircle2, Flame, RotateCcw } from 'lucide-react';
+import { getLevelForXP, getXPProgressToNextLevel } from '../../data/levelDefinitions';
+import { badges as badgeDefs } from '../../data/badgeDefinitions';
+import { Trophy, Target, CheckCircle2, Flame, RotateCcw, Star, Award, Volume2, VolumeX } from 'lucide-react';
+import StreakCounter from '../gamification/StreakCounter';
 
 export default function ProgressPanel() {
   const { name } = useUser();
   const { totalQuizzes, correctQuizzes, completedTopics, resetProgress } = useProgress();
+  const { gamification, toggleSound } = useGamification();
   const totalTopics = getAllTopicIds().length;
   const accuracy = totalQuizzes > 0 ? Math.round((correctQuizzes / totalQuizzes) * 100) : null;
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const currentLevel = getLevelForXP(gamification.xp);
+  const xpProgress = getXPProgressToNextLevel(gamification.xp);
+  const earnedBadges = badgeDefs.filter(b => gamification.badges.includes(b.id));
 
   const handleReset = () => {
     resetProgress();
@@ -59,6 +67,48 @@ export default function ProgressPanel() {
           progress={accuracy ?? 0}
           color="yellow"
         />
+
+        {/* XP & Level */}
+        <StatCard
+          icon={<Star size={20} className="text-brand-500" />}
+          label={`Level ${currentLevel.level} — ${currentLevel.title}`}
+          value={`${gamification.xp} XP`}
+          progress={xpProgress.percent}
+          color="blue"
+          subtext={`${xpProgress.current}/${xpProgress.needed} to next level`}
+        />
+
+        {/* Streak */}
+        <div className="bg-gray-50 rounded-xl p-4">
+          <div className="flex items-center justify-between">
+            <StreakCounter streak={gamification.currentStreak} />
+            <span className="text-xs text-gray-400">Best: {gamification.longestStreak}</span>
+          </div>
+        </div>
+
+        {/* Badges */}
+        {earnedBadges.length > 0 && (
+          <div className="bg-gray-50 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Award size={20} className="text-purple-500" />
+              <span className="text-sm text-gray-500">Badges ({earnedBadges.length})</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {earnedBadges.map(b => (
+                <span key={b.id} className="text-2xl" title={b.name}>{b.icon}</span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Sound toggle */}
+        <button
+          onClick={toggleSound}
+          className="flex items-center gap-2 px-3 py-2 text-xs text-gray-500 hover:text-gray-700 transition-colors w-full rounded-lg hover:bg-gray-50"
+        >
+          {gamification.soundEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />}
+          Sound: {gamification.soundEnabled ? 'On' : 'Off'}
+        </button>
 
         {/* Encouragement */}
         <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-4 border border-orange-100">
