@@ -1,3 +1,4 @@
+import GeometryDiagram from '../diagrams/GeometryDiagram';
 import Parallelogram from '../diagrams/Parallelogram';
 import Rhombus from '../diagrams/Rhombus';
 import Rectangle from '../diagrams/Rectangle';
@@ -9,6 +10,8 @@ import DiagonalDemo from '../diagrams/DiagonalDemo';
 import PolygonIntro from '../diagrams/PolygonIntro';
 import AngleSum from '../diagrams/AngleSum';
 import QuadrilateralFamily from '../diagrams/QuadrilateralFamily';
+
+const geometryShapes = ['parallelogram', 'rhombus', 'rectangle', 'square', 'kite', 'trapezium', 'generic-quadrilateral'];
 
 const diagramMap: Record<string, React.FC> = {
   parallelogram: Parallelogram,
@@ -29,8 +32,15 @@ interface Props {
 }
 
 export default function DiagramRenderer({ diagramId }: Props) {
-  const Diagram = diagramMap[diagramId];
+  if (geometryShapes.includes(diagramId)) {
+    return (
+      <div className="my-3 flex justify-center bg-white rounded-xl p-3 border border-gray-100">
+        <GeometryDiagram shape={diagramId} showLabels />
+      </div>
+    );
+  }
 
+  const Diagram = diagramMap[diagramId];
   if (!Diagram) {
     return (
       <div className="my-2 p-3 bg-gray-50 rounded-xl text-sm text-gray-400">
