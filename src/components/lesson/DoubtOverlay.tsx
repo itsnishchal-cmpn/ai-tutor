@@ -48,27 +48,39 @@ export default function DoubtOverlay({ isOpen, onClose, topicTitle }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Spacebar hold-to-speak: keydown starts, keyup stops and transcribes
+  // Spacebar hold-to-speak: works globally when overlay is open
   useEffect(() => {
     if (!isOpen) return;
+    let spaceHeld = false;
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === 'Space' && document.activeElement === inputRef.current && !input.trim() && inputState === 'idle' && !isStreaming) {
+      if (e.code !== 'Space' || e.repeat) return;
+      // Only trigger if input is focused and empty, or if no element is focused
+      const inputFocused = document.activeElement === inputRef.current;
+      if (inputFocused && !input.trim() && inputState === 'idle' && !isStreaming) {
         e.preventDefault();
+        e.stopPropagation();
+        spaceHeld = true;
         startRecording();
       }
     };
+
     const handleKeyUp = async (e: KeyboardEvent) => {
-      if (e.code === 'Space' && inputState === 'recording') {
-        e.preventDefault();
+      if (e.code !== 'Space' || !spaceHeld) return;
+      e.preventDefault();
+      e.stopPropagation();
+      spaceHeld = false;
+      if (inputState === 'recording') {
         const text = await stopRecording();
         if (text) setInput(text);
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
+
+    window.addEventListener('keydown', handleKeyDown, true);
+    window.addEventListener('keyup', handleKeyUp, true);
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('keydown', handleKeyDown, true);
+      window.removeEventListener('keyup', handleKeyUp, true);
     };
   }, [isOpen, input, inputState, isStreaming, startRecording, stopRecording]);
 
@@ -250,79 +262,97 @@ export default function DoubtOverlay({ isOpen, onClose, topicTitle }: Props) {
           </div>
         )}
 
-        {/* Recording indicator */}
-        {inputState !== 'idle' && (
-          <div className="flex items-center gap-2 px-4 py-1.5 text-xs border-t border-gray-100">
-            <span className={`w-2 h-2 rounded-full animate-pulse ${inputState === 'recording' ? 'bg-red-500' : 'bg-gray-400'}`} />
-            <span className={inputState === 'recording' ? 'text-red-500' : 'text-gray-500'}>
-              {inputState === 'recording' ? 'Listening... (release space to send)' : 'Transcribing...'}
-            </span>
-          </div>
-        )}
-
         {/* Input bar */}
         <div className="p-3 border-t border-gray-100">
-          <div className="flex gap-2 items-end">
-            {/* Photo upload button */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/heic"
-              capture="environment"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) handleImageSelect(file);
-                e.target.value = '';
-              }}
-            />
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isStreaming}
-              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors disabled:opacity-50"
-              title="Upload photo of textbook/problem"
-            >
-              <Paperclip size={18} />
-            </button>
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/heic"
+            capture="environment"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleImageSelect(file);
+              e.target.value = '';
+            }}
+          />
 
-            {/* Text input */}
-            <input
-              ref={inputRef}
-              type="text"
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleSend()}
-              placeholder={pendingImage ? 'Add a message...' : 'Type or hold Space to speak...'}
-              className="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400"
-              disabled={isStreaming || inputState === 'processing'}
-            />
+          {inputState !== 'idle' ? (
+            /* Recording / Transcribing UI — replaces the text input */
+            <div className="flex items-center gap-3 px-3 py-2 border border-gray-200 rounded-xl bg-gray-50">
+              <span className={`w-3 h-3 rounded-full shrink-0 ${inputState === 'recording' ? 'bg-red-500 animate-pulse' : 'bg-amber-400 animate-pulse'}`} />
+              <div className="flex-1">
+                {inputState === 'recording' ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-red-600 font-medium">Listening...</span>
+                    {/* Simple waveform bars */}
+                    <div className="flex items-center gap-0.5 h-5">
+                      {[1,2,3,4,5,6,7].map(i => (
+                        <div
+                          key={i}
+                          className="w-1 bg-red-400 rounded-full"
+                          style={{
+                            height: `${8 + Math.random() * 12}px`,
+                            animation: `waveform 0.5s ${i * 0.07}s ease-in-out infinite alternate`,
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <span className="text-sm text-amber-600 font-medium">Transcribing...</span>
+                )}
+              </div>
+              {inputState === 'recording' && (
+                <span className="text-xs text-gray-400">Release space to send</span>
+              )}
+            </div>
+          ) : (
+            /* Normal input bar */
+            <div className="flex gap-2 items-end">
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isStreaming}
+                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors disabled:opacity-50"
+                title="Upload photo"
+              >
+                <Paperclip size={18} />
+              </button>
 
-            {/* Mic button (for mobile — hold to record) */}
-            <button
-              onMouseDown={() => inputState === 'idle' && !isStreaming && startRecording()}
-              onMouseUp={async () => { if (inputState === 'recording') { const t = await stopRecording(); if (t) setInput(t); } }}
-              onTouchStart={() => inputState === 'idle' && !isStreaming && startRecording()}
-              onTouchEnd={async () => { if (inputState === 'recording') { const t = await stopRecording(); if (t) setInput(t); } }}
-              disabled={isStreaming || inputState === 'processing'}
-              className={`p-2 rounded-xl transition-colors ${
-                inputState === 'recording'
-                  ? 'bg-red-500 text-white animate-pulse'
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-50'
-              }`}
-              title="Hold to speak"
-            >
-              <Mic size={18} />
-            </button>
+              <input
+                ref={inputRef}
+                type="text"
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleSend()}
+                placeholder={pendingImage ? 'Add a message...' : 'Type or hold Space to speak...'}
+                className="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400"
+                disabled={isStreaming}
+              />
 
-            {/* Send button */}
-            <button
-              onClick={handleSend}
-              disabled={(!input.trim() && !pendingImage) || isStreaming}
-              className="p-2 bg-brand-600 text-white rounded-xl hover:bg-brand-700 disabled:opacity-50 transition-colors"
-            >
-              {isStreaming ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
-            </button>
-          </div>
+              {/* Mic button (for mobile) */}
+              <button
+                onMouseDown={() => { if (!isStreaming) startRecording(); }}
+                onMouseUp={async () => { const t = await stopRecording(); if (t) setInput(t); }}
+                onTouchStart={() => { if (!isStreaming) startRecording(); }}
+                onTouchEnd={async () => { const t = await stopRecording(); if (t) setInput(t); }}
+                disabled={isStreaming}
+                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors disabled:opacity-50"
+                title="Hold to speak"
+              >
+                <Mic size={18} />
+              </button>
+
+              <button
+                onClick={handleSend}
+                disabled={(!input.trim() && !pendingImage) || isStreaming}
+                className="p-2 bg-brand-600 text-white rounded-xl hover:bg-brand-700 disabled:opacity-50 transition-colors"
+              >
+                {isStreaming ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

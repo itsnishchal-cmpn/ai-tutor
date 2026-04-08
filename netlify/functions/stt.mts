@@ -17,7 +17,7 @@ export default async function handler(req: Request, _context: Context) {
     const transcription = await openai.audio.transcriptions.create({
       model: 'whisper-1',
       file: audioFile,
-      language: 'hi',
+      // No language param — Whisper auto-detects Hindi, English, Hinglish, etc.
       response_format: 'json',
     });
 
