@@ -1,11 +1,15 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CurriculumSidebar from './CurriculumSidebar';
 import ProgressPanel from './ProgressPanel';
 import ChatInterface from '../chat/ChatInterface';
+import LessonContainer from '../lesson/LessonContainer';
 import { useChat } from '../../hooks/useChat';
+import { useLesson } from '../../hooks/useLesson';
+import { getTemplate } from '../../data/lessonTemplates';
 import { useUser } from '../../contexts/UserContext';
 import { useProgress } from '../../contexts/ProgressContext';
+import { useGamification } from '../../contexts/GamificationContext';
 import { getNextTopicId, getTopicById } from '../../data/curriculum';
 import {
   Menu,
@@ -19,9 +23,17 @@ export default function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [progressOpen, setProgressOpen] = useState(false);
   const { currentTopicId, selectTopic, messages, isStreaming, streamingContent, sendUserMessage } = useChat();
+  const { state: lessonState, startTopic: startLessonTopic } = useLesson();
+  const isLessonMode = lessonState.topicId !== null;
   const { clearUser } = useUser();
   const { markTopicCompleted } = useProgress();
+  const { updateStreak } = useGamification();
   const navigate = useNavigate();
+
+  // Start/maintain streak when the app is opened
+  useEffect(() => {
+    updateStreak();
+  }, [updateStreak]);
 
   const handleLogout = () => {
     clearUser();
@@ -55,6 +67,15 @@ export default function AppLayout() {
       selectTopic(nextTopicId);
     }
   }, [nextTopicId, selectTopic]);
+
+  const handleSelectTopic = useCallback((topicId: string) => {
+    const template = getTemplate(topicId);
+    if (template) {
+      startLessonTopic(topicId);
+    } else {
+      selectTopic(topicId);
+    }
+  }, [selectTopic, startLessonTopic]);
 
   return (
     <div className="app-shell flex flex-col bg-gray-50">
@@ -97,7 +118,7 @@ export default function AppLayout() {
             </div>
             <CurriculumSidebar
               currentTopicId={currentTopicId}
-              onSelectTopic={selectTopic}
+              onSelectTopic={handleSelectTopic}
             />
           </div>
         </aside>
@@ -115,7 +136,7 @@ export default function AppLayout() {
               </div>
               <CurriculumSidebar
                 currentTopicId={currentTopicId}
-                onSelectTopic={selectTopic}
+                onSelectTopic={handleSelectTopic}
                 onClose={() => setSidebarOpen(false)}
               />
             </div>
@@ -124,18 +145,22 @@ export default function AppLayout() {
 
         {/* Chat area */}
         <main className="flex-1 min-w-0 overflow-hidden">
-          <ChatInterface
-            messages={messages}
-            isStreaming={isStreaming}
-            streamingContent={streamingContent}
-            onSend={sendUserMessage}
-            currentTopicId={currentTopicId}
-            onSelectTopic={selectTopic}
-            onTopicComplete={handleTopicComplete}
-            onNextTopic={handleNextTopic}
-            nextTopicTitle={nextTopicTitle}
-            isTopicCompleted={isCurrentTopicCompleted}
-          />
+          {isLessonMode ? (
+            <LessonContainer />
+          ) : (
+            <ChatInterface
+              messages={messages}
+              isStreaming={isStreaming}
+              streamingContent={streamingContent}
+              onSend={sendUserMessage}
+              currentTopicId={currentTopicId}
+              onSelectTopic={handleSelectTopic}
+              onTopicComplete={handleTopicComplete}
+              onNextTopic={handleNextTopic}
+              nextTopicTitle={nextTopicTitle}
+              isTopicCompleted={isCurrentTopicCompleted}
+            />
+          )}
         </main>
 
         {/* Progress panel — desktop always, mobile bottom sheet */}

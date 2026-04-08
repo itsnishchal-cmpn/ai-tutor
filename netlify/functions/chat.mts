@@ -30,7 +30,7 @@ export default async function handler(req: Request, _context: Context) {
 
     const stream = anthropic.messages.stream({
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 1024,
+      max_tokens: 8192,
       system: systemPrompt,
       messages: messages.map((m: { role: string; content: string }) => ({
         role: m.role as 'user' | 'assistant',

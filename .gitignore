@@ -29,3 +29,7 @@ dist-ssr
 
 # netlify
 .netlify
+
+# test artifacts
+test-results
+playwright-report
