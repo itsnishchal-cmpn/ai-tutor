@@ -97,14 +97,39 @@ export default function DoubtOverlay({ isOpen, onClose, topicTitle }: Props) {
       alert('Image must be under 10MB');
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      const [header, data] = result.split(',');
+
+    // Compress image client-side to stay under Netlify CLI's body size limit (~6MB)
+    // Resize to max 800px and compress to JPEG 70% quality
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      const canvas = document.createElement('canvas');
+      const MAX_DIM = 800;
+      let { width, height } = img;
+      if (width > MAX_DIM || height > MAX_DIM) {
+        if (width > height) {
+          height = Math.round((height * MAX_DIM) / width);
+          width = MAX_DIM;
+        } else {
+          width = Math.round((width * MAX_DIM) / height);
+          height = MAX_DIM;
+        }
+      }
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d')!;
+      ctx.drawImage(img, 0, 0, width, height);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+      const [header, data] = dataUrl.split(',');
       const mediaType = header.match(/data:(.*?);/)?.[1] ?? 'image/jpeg';
-      setPendingImage({ data, mediaType, preview: result });
+      setPendingImage({ data, mediaType, preview: dataUrl });
     };
-    reader.readAsDataURL(file);
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      alert('Could not process this image. Try a different one.');
+    };
+    img.src = objectUrl;
   };
 
   const readSSEStream = async (response: Response, onChunk: (text: string) => void): Promise<string> => {
