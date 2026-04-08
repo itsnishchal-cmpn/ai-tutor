@@ -81,6 +81,7 @@ export interface LessonState {
 
 export type LessonAction =
   | { type: 'START_TOPIC'; payload: { topicId: string; template: LessonTemplate } }
+  | { type: 'RESTORE_BOOKMARK'; payload: { topicId: string; template: LessonTemplate; phase: LessonPhase; currentCardIndex: number; currentQuizIndex: number } }
   | { type: 'LESSON_LOADED'; payload: { lesson: GeneratedLesson } }
   | { type: 'LESSON_ERROR'; payload: { error: string } }
   | { type: 'SKIP_VIDEO' }

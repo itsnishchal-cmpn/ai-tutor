@@ -1,5 +1,5 @@
-import { useCallback, useRef } from 'react';
-import { useLessonContext } from '../contexts/LessonContext';
+import { useCallback, useRef, useEffect } from 'react';
+import { useLessonContext, getSavedBookmark } from '../contexts/LessonContext';
 import { useUser } from '../contexts/UserContext';
 import { useProgress } from '../contexts/ProgressContext';
 import { useGamification } from '../contexts/GamificationContext';
@@ -48,6 +48,52 @@ export function useLesson() {
   const sessionXPRef = useRef(0);
   const quizCorrectRef = useRef(0);
   const quizTotalRef = useRef(0);
+  const restoredRef = useRef(false);
+
+  // Restore lesson state from bookmark on mount
+  useEffect(() => {
+    if (restoredRef.current || state.topicId) return;
+    restoredRef.current = true;
+
+    const bookmark = getSavedBookmark();
+    if (!bookmark) return;
+
+    const template = getTemplate(bookmark.topicId);
+    if (!template) return;
+
+    // Restore the lesson state
+    dispatch({
+      type: 'RESTORE_BOOKMARK',
+      payload: {
+        topicId: bookmark.topicId,
+        template,
+        phase: bookmark.phase,
+        currentCardIndex: bookmark.currentCardIndex,
+        currentQuizIndex: bookmark.currentQuizIndex,
+      },
+    });
+
+    // Load the cached lesson content
+    const cacheKey = `lesson_${bookmark.topicId}`;
+    const cached = getItem<GeneratedLesson | null>(cacheKey, null);
+    if (cached) {
+      cached.cards = cached.cards.map((card, i) => ({
+        ...card,
+        diagramConfig: template.cards[i]?.diagramConfig ?? card.diagramConfig,
+      }));
+      dispatch({ type: 'LESSON_LOADED', payload: { lesson: cached } });
+    } else {
+      // No cached content — need to regenerate
+      const topicInfo = getTopicById(bookmark.topicId);
+      const topicTitle = topicInfo?.topic.title ?? bookmark.topicId;
+      generateLessonContent(name, topicTitle, template).then(lesson => {
+        setItem(cacheKey, lesson);
+        dispatch({ type: 'LESSON_LOADED', payload: { lesson } });
+      }).catch(() => {
+        dispatch({ type: 'LESSON_ERROR', payload: { error: 'Failed to restore lesson' } });
+      });
+    }
+  }, [dispatch, name, state.topicId]);
 
   const startTopic = useCallback(async (topicId: string) => {
     const template = getTemplate(topicId);
