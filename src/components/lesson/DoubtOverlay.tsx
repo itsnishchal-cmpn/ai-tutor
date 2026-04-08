@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
-import { X, Send, Loader2, Paperclip } from 'lucide-react';
+import { X, Send, Loader2, Paperclip, Mic } from 'lucide-react';
 import { sendMessageWithRetry } from '../../lib/api';
 import { buildDoubtChatPrompt, buildVisionPrompt } from '../../data/lessonPrompts';
 import { useUser } from '../../contexts/UserContext';
+import { useGamification } from '../../contexts/GamificationContext';
+import { useVoiceInput } from '../../hooks/useVoiceInput';
 
 interface DoubtMessage {
   role: 'user' | 'assistant';
@@ -35,6 +37,8 @@ function FormattedText({ content, className }: { content: string; className?: st
 
 export default function DoubtOverlay({ isOpen, onClose, topicTitle }: Props) {
   const { name } = useUser();
+  const { incrementDoubts } = useGamification();
+  const { inputState, startRecording, stopRecording } = useVoiceInput();
   const [messages, setMessages] = useState<DoubtMessage[]>([]);
   const [input, setInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
@@ -42,6 +46,31 @@ export default function DoubtOverlay({ isOpen, onClose, topicTitle }: Props) {
   const [pendingImage, setPendingImage] = useState<{ data: string; mediaType: string; preview: string } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Spacebar hold-to-speak: keydown starts, keyup stops and transcribes
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space' && document.activeElement === inputRef.current && !input.trim() && inputState === 'idle' && !isStreaming) {
+        e.preventDefault();
+        startRecording();
+      }
+    };
+    const handleKeyUp = async (e: KeyboardEvent) => {
+      if (e.code === 'Space' && inputState === 'recording') {
+        e.preventDefault();
+        const text = await stopRecording();
+        if (text) setInput(text);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [isOpen, input, inputState, isStreaming, startRecording, stopRecording]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -110,6 +139,7 @@ export default function DoubtOverlay({ isOpen, onClose, topicTitle }: Props) {
     setMessages(newMessages);
     setIsStreaming(true);
     setStreamingContent('');
+    incrementDoubts();
 
     try {
       if (capturedImage) {
@@ -220,6 +250,16 @@ export default function DoubtOverlay({ isOpen, onClose, topicTitle }: Props) {
           </div>
         )}
 
+        {/* Recording indicator */}
+        {inputState !== 'idle' && (
+          <div className="flex items-center gap-2 px-4 py-1.5 text-xs border-t border-gray-100">
+            <span className={`w-2 h-2 rounded-full animate-pulse ${inputState === 'recording' ? 'bg-red-500' : 'bg-gray-400'}`} />
+            <span className={inputState === 'recording' ? 'text-red-500' : 'text-gray-500'}>
+              {inputState === 'recording' ? 'Listening... (release space to send)' : 'Transcribing...'}
+            </span>
+          </div>
+        )}
+
         {/* Input bar */}
         <div className="p-3 border-t border-gray-100">
           <div className="flex gap-2 items-end">
@@ -247,14 +287,32 @@ export default function DoubtOverlay({ isOpen, onClose, topicTitle }: Props) {
 
             {/* Text input */}
             <input
+              ref={inputRef}
               type="text"
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleSend()}
-              placeholder={pendingImage ? 'Add a message (optional)...' : 'Type your doubt...'}
+              placeholder={pendingImage ? 'Add a message...' : 'Type or hold Space to speak...'}
               className="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400"
-              disabled={isStreaming}
+              disabled={isStreaming || inputState === 'processing'}
             />
+
+            {/* Mic button (for mobile — hold to record) */}
+            <button
+              onMouseDown={() => inputState === 'idle' && !isStreaming && startRecording()}
+              onMouseUp={async () => { if (inputState === 'recording') { const t = await stopRecording(); if (t) setInput(t); } }}
+              onTouchStart={() => inputState === 'idle' && !isStreaming && startRecording()}
+              onTouchEnd={async () => { if (inputState === 'recording') { const t = await stopRecording(); if (t) setInput(t); } }}
+              disabled={isStreaming || inputState === 'processing'}
+              className={`p-2 rounded-xl transition-colors ${
+                inputState === 'recording'
+                  ? 'bg-red-500 text-white animate-pulse'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-50'
+              }`}
+              title="Hold to speak"
+            >
+              <Mic size={18} />
+            </button>
 
             {/* Send button */}
             <button

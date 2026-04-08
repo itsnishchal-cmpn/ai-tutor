@@ -1,6 +1,9 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useLesson } from '../../hooks/useLesson';
 import { useVoice } from '../../hooks/useVoice';
+import { useGamification } from '../../contexts/GamificationContext';
+import { getLevelForXP } from '../../data/levelDefinitions';
+import { badges as badgeDefs } from '../../data/badgeDefinitions';
 import { getTopicById } from '../../data/curriculum';
 import { MessageCircle } from 'lucide-react';
 import VideoIntro from './VideoIntro';
@@ -11,6 +14,10 @@ import TopicComplete from './TopicComplete';
 import LessonLoading from './LessonLoading';
 import DoubtOverlay from './DoubtOverlay';
 import VoiceToggle from '../voice/VoiceToggle';
+import ConfettiEffect from '../gamification/ConfettiEffect';
+import XPPopup from '../gamification/XPPopup';
+import LevelUpModal from '../gamification/LevelUpModal';
+import BadgeUnlock from '../gamification/BadgeUnlock';
 
 export default function LessonContainer() {
   const {
@@ -22,7 +29,52 @@ export default function LessonContainer() {
   } = useLesson();
 
   const { voiceEnabled, toggleVoice, speak, stop, isPlaying } = useVoice();
+  const { gamification } = useGamification();
   const [doubtOpen, setDoubtOpen] = useState(false);
+
+  // Gamification popup state
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [xpPopup, setXpPopup] = useState<number | null>(null);
+  const [levelUpInfo, setLevelUpInfo] = useState<{ level: number; title: string } | null>(null);
+  const [badgeInfo, setBadgeInfo] = useState<{ name: string; icon: string } | null>(null);
+
+  // Track XP changes to show popups
+  const prevXPRef = useMemo(() => ({ current: gamification.xp }), []);
+  const prevBadgesRef = useMemo(() => ({ current: [...gamification.badges] }), []);
+
+  useEffect(() => {
+    const xpDiff = gamification.xp - prevXPRef.current;
+    if (xpDiff > 0) {
+      setXpPopup(xpDiff);
+
+      // Check for level up
+      const oldLevel = getLevelForXP(prevXPRef.current);
+      const newLevel = getLevelForXP(gamification.xp);
+      if (newLevel.level > oldLevel.level) {
+        setTimeout(() => setLevelUpInfo({ level: newLevel.level, title: newLevel.title }), 1800);
+      }
+    }
+    prevXPRef.current = gamification.xp;
+  }, [gamification.xp]);
+
+  // Check for new badges
+  useEffect(() => {
+    const newBadge = gamification.badges.find(id => !prevBadgesRef.current.includes(id));
+    if (newBadge) {
+      const badge = badgeDefs.find(b => b.id === newBadge);
+      if (badge) {
+        setTimeout(() => setBadgeInfo({ name: badge.name, icon: badge.icon }), 2000);
+      }
+    }
+    prevBadgesRef.current = [...gamification.badges];
+  }, [gamification.badges]);
+
+  // Show confetti when topic completes
+  useEffect(() => {
+    if (state.phase === 'TOPIC_COMPLETE') {
+      setShowConfetti(true);
+    }
+  }, [state.phase]);
 
   const topicTitle = useMemo(
     () => state.topicId ? getTopicById(state.topicId)?.topic.title ?? '' : '',
@@ -146,6 +198,12 @@ export default function LessonContainer() {
       )}
 
       <DoubtOverlay isOpen={doubtOpen} onClose={() => setDoubtOpen(false)} topicTitle={topicTitle} topicId={state.topicId} />
+
+      {/* Gamification popups */}
+      {showConfetti && <ConfettiEffect onDone={() => setShowConfetti(false)} />}
+      {xpPopup !== null && <XPPopup amount={xpPopup} onDone={() => setXpPopup(null)} />}
+      {levelUpInfo && <LevelUpModal level={levelUpInfo.level} title={levelUpInfo.title} onDone={() => setLevelUpInfo(null)} />}
+      {badgeInfo && <BadgeUnlock badgeName={badgeInfo.name} badgeIcon={badgeInfo.icon} onDone={() => setBadgeInfo(null)} />}
     </div>
   );
 }
