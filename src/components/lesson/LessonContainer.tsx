@@ -107,8 +107,8 @@ export default function LessonContainer() {
     return (
       <div className="h-full flex items-center justify-center px-6">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">Welcome!</h2>
-          <p className="text-gray-500">Select a topic from the sidebar to start learning.</p>
+          <h2 className="text-xl font-semibold text-[#1E293B] mb-2">Welcome!</h2>
+          <p className="text-[#64748B]">Select a topic from the progress path to start learning.</p>
         </div>
       </div>
     );
@@ -119,7 +119,7 @@ export default function LessonContainer() {
       <div className="h-full flex flex-col items-center justify-center px-6">
         <p className="text-red-500 mb-4">{state.error}</p>
         <button onClick={() => state.topicId && startTopic(state.topicId)}
-          className="px-6 py-2 bg-brand-600 text-white rounded-xl hover:bg-brand-700">
+          className="px-6 py-2 bg-indigo-500 text-white rounded-xl hover:bg-indigo-600 btn-press shadow-md font-bold">
           Retry
         </button>
       </div>
